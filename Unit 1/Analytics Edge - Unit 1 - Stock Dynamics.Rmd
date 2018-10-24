@@ -1,0 +1,254 @@
+---
+title: 'Analytics Edge: Unit 1 - Stock Dynamics '
+author: "Sulman Khan"
+date: "October 24, 2018"
+output: 
+  html_document:
+    css: gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'center', dpi = 100, fig.path = 'figures/NBA/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Background Information on the Dataset
+
+A stock market is where buyers and sellers trade shares of a company, and is one of the most popular ways for individuals and companies to invest money. The size of the world stock market  is now estimated to be in the trillions. The largest stock market in the world is the New York Stock Exchange (NYSE), located in New York City. About 2,800 companies are listed on the NYSE. In this problem, we'll look at the monthly stock prices of five of these companies: IBM, General Electric (GE), Procter and Gamble, Coca Cola, and Boeing. The data used in this problem comes from Infochimps.
+
+There are two main types of crimes: violent crimes, and property crimes. In this problem, we'll focus on one specific type of property crime, called "motor vehicle theft" (sometimes referred to as grand theft auto). This is the act of stealing, or attempting to steal, a car. In this problem, we'll use some basic data analysis in R to understand the motor vehicle thefts in Chicago. 
+
+Download and read the following files into R, using the read.csv function:
+[IBMStock.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/4fc08d10f171aacf2ef61c6b4b5bb4d8/asset-v1:MITx+15.071x+3T2018+type@asset+block/IBMStock.csv), [GEStock.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/448b8be4693d913c2b5153be0c0e25d6/asset-v1:MITx+15.071x+3T2018+type@asset+block/GEStock.csv), [ProcterGambleStock.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/448b8be4693d913c2b5153be0c0e25d6/asset-v1:MITx+15.071x+3T2018+type@asset+block/ProcterGambleStock.csv), [CocaCola.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/448b8be4693d913c2b5153be0c0e25d6/asset-v1:MITx+15.071x+3T2018+type@asset+block/CocaCola.csv), and [BoeingStock.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/448b8be4693d913c2b5153be0c0e25d6/asset-v1:MITx+15.071x+3T2018+type@asset+block/BoeingStock.csv) 
+
+* **ID**: the date of the stock price, always given as the first of the month.
+
+* **StockPrice**: the average stock price of the company in the given month.
+
+In this problem, we'll take a look at how the stock dynamics of these companies have changed over time.
+
+## R Exercises
+
+
+Right now, the date variable is stored as a factor. We can convert this to a "Date" object in R by using the following five commands (one for each data set):
+
+``` {r datefactor}
+IBM = read.csv("IBMStock.csv")
+GE = read.csv("GEStock.csv")
+ProcterGamble = read.csv("ProcterGambleStock.csv")
+CocaCola = read.csv("CocaColaStock.csv")
+Boeing = read.csv("BoeingStock.csv")
+
+IBM$Date = as.Date(IBM$Date, "%m/%d/%y")
+
+GE$Date = as.Date(GE$Date, "%m/%d/%y")
+
+CocaCola$Date = as.Date(CocaCola$Date, "%m/%d/%y")
+
+ProcterGamble$Date = as.Date(ProcterGamble$Date, "%m/%d/%y")
+
+Boeing$Date = as.Date(Boeing$Date, "%m/%d/%y")
+```
+
+### How many observations are there in each data set?
+
+``` {r strstocks}
+str(IBM)
+```
+
+**Explanation**: Using the str function, we can see that each data set has 480 observations. We have monthly data for 40 years, so there are 12*40 = 480 observations.
+
+### What is the earliest year in our datasets?
+```{r earliestyeardata}
+summary(IBM)
+```
+
+**Explanation**: Using the summary function, the minimum value of the Date variable is January 1, 1970 for any dataset.
+
+### What is the latest year in our datasets?
+```{r latestyeardata}
+summary(IBM)
+```
+
+**Explanation**: Using the summary function, the maximum value of the Date variable is December 1, 2009 for any dataset.
+
+### What is the mean stock price of IBM over this time period?
+```{r meanstockprice}
+summary(IBM)
+```
+
+**Explanation**: By typing summary(IBM), we can see that the mean value of the IBM StockPrice is 144.38.
+
+### What is the minimum stock price of General Electric (GE) over this time period?
+```{r minimumstockpriceGE}
+summary(GE)
+```
+
+**Explanation**: By typing summary(GE), we can see that the minimum value of the GE StockPrice is 9.294.
+
+### What is the maximum stock price of Coca-Cola over this time period?
+```{r maxstockpriceCocaCola}
+summary(CocaCola)
+```
+
+**Explanation**: By typing summary(CocaCola), we can see that the maximum value of the Coca-Cola StockPrice is 146.58.
+
+### What is the median stock price of Boeing over this time period?
+```{r medianstockBoeing}
+summary(Boeing)
+```
+
+**Explanation**: By typing summary(Boeing), we can see that the median value of the Boeing StockPrice is 44.88.
+
+### What is the standard deviation of the stock price of Procter & Gamble over this time period?
+```{r sdProcterGamble$StockPrice}
+sd(ProcterGamble$StockPrice)
+```
+
+**Explanation**: By typing sd(ProcterGamble$StockPrice), we can see that the standard deviation of the Procter & Gamble StockPrice is 18.19414.
+
+## Visualizing Stock Dynamics
+
+``` {r plotCocaColaDateStock}
+plot(CocaCola$Date, CocaCola$StockPrice, type="l")
+```
+
+### Around what year did Coca-Cola has its highest stock price in this time period?
+1973.
+
+### Around what year did Coca-Cola has its lowest stock price in this time period?
+1980.
+
+### In March of 2000, the technology bubble burst, and a stock market crash occurred. According to this plot, which company's stock dropped more?
+
+``` {r plotCocaColaProcterGambleDateStock}
+plot(CocaCola$Date, CocaCola$StockPrice, type="l", col="red")
+lines(ProcterGamble$Date, ProcterGamble$StockPrice, col="blue")
+abline(v=as.Date(c("2000-03-01")), lwd=2)
+legend("bottomleft",
+  legend=c("Coca Cola", "ProcterGamble"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+```
+
+Procter and Gamble.
+
+### Around 1983, the stock for one of these companies (Coca-Cola or Procter and Gamble) was going up, while the other was going down. Which one was going up?
+
+Coca-Cola.
+
+### In the time period shown in the plot, which stock generally has lower values?
+
+Coca-Cola.
+
+## Visualizing Stock Dynamics 1995-2005
+
+Let's take a look at how the stock prices changed from 1995-2005 for all five companies. In your R console, start by typing the following plot command:
+
+```{r VisualizingStockDynamics1995to2005}
+plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col="red", ylim=c(0,210), xlab = "Date", ylab = "Stock Price")
+
+lines(ProcterGamble$Date[301:432], ProcterGamble$StockPrice[301:432], col="blue")
+lines(IBM$Date[301:432], IBM$StockPrice[301:432], col="green")
+lines(GE$Date[301:432], GE$StockPrice[301:432], col="purple")
+lines(Boeing$Date[301:432], Boeing$StockPrice[301:432], col="orange")
+abline(v=as.Date(c("2000-03-01")), lwd=2)
+
+legend( "topleft",
+       legend=c("Coca Cola", "ProcterGamble", "IBM", "GE", "Boeing"),
+       col=c("red", "blue", "green", "purple", "orange"), lty=1:2, cex=0.8)
+
+```
+
+### Which stock fell the most right after the technology bubble burst in March 2000?
+
+General Electric (GE).
+
+### Which stock reaches the highest value in the time period 1995-2005?
+
+IBM.
+
+### In October of 1997, there was a global stock market crash that was caused by an economic crisis in Asia. Comparing September 1997 to November 1997, which companies saw a decreasing trend in their stock price?
+
+```{r VisualizingStockDynamics1995to2005octnov}
+plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col="red", ylim=c(0,210), xlab = "Date", ylab = "Stock Price")
+
+lines(ProcterGamble$Date[301:432], ProcterGamble$StockPrice[301:432], col="blue")
+lines(IBM$Date[301:432], IBM$StockPrice[301:432], col="green")
+lines(GE$Date[301:432], GE$StockPrice[301:432], col="purple")
+lines(Boeing$Date[301:432], Boeing$StockPrice[301:432], col="orange")
+abline(v=as.Date(c("1997-09-01")), lwd=2)
+abline(v=as.Date(c("1997-11-01")), lwd=2)
+
+legend( "topleft",
+       legend=c("Coca Cola", "ProcterGamble", "IBM", "GE", "Boeing"),
+       col=c("red", "blue", "green", "purple", "orange"), lty=1:2, cex=0.8)
+```
+
+Two companies had a decreasing trend in stock prices from September 1997 to November 1997: Boeing and Procter & Gamble.
+
+### In the last two years of this time period (2004 and 2005) which stock seems to be performing the best, in terms of increasing stock price?
+
+```{r VisualizingStockDynamics1995to20052004&2005}
+plot(CocaCola$Date[301:432], CocaCola$StockPrice[301:432], type="l", col="red", ylim=c(0,210), xlab = "Date", ylab = "Stock Price")
+
+lines(ProcterGamble$Date[301:432], ProcterGamble$StockPrice[301:432], col="blue")
+lines(IBM$Date[301:432], IBM$StockPrice[301:432], col="green")
+lines(GE$Date[301:432], GE$StockPrice[301:432], col="purple")
+lines(Boeing$Date[301:432], Boeing$StockPrice[301:432], col="orange")
+abline(v=as.Date(c("2004-1-01")), lwd=2)
+abline(v=as.Date(c("2006-1-01")), lwd=2)
+
+legend( "topleft",
+       legend=c("Coca Cola", "ProcterGamble", "IBM", "GE", "Boeing"),
+       col=c("red", "blue", "green", "purple", "orange"), lty=1:2, cex=0.8)
+```
+
+Boeing is steadily increasing from 2004 to the beginning of 2006.
+
+## Monthly Trends
+
+Lastly, let's see if stocks tend to be higher or lower during certain months.
+
+
+
+### For IBM, compare the monthly averages to the overall average stock price. In which months has IBM historically had a higher stock price?
+
+``` {r IBMStockPriceMonthsMean}
+tapply(IBM$StockPrice, months(IBM$Date), mean)
+```
+
+The overall average stock price for IBM is 144.375, which can be computed using the command mean(IBM\$StockPrice). Comparing the monthly averages to this, using the command tapply(IBM\$StockPrice, months(IBM$Date), mean), we can see that the price has historically been higher than average January - May, and lower than average during the remaining months.
+
+### General Electric and Coca-Cola both have their highest average stock price in the same month. Which month is this?
+
+``` {r GECocaCOlaStockPriceMonthsMean}
+tapply(GE$StockPrice, months(GE$Date), mean)
+
+tapply(CocaCola$StockPrice, months(CocaCola$Date), mean)
+
+tapply(IBM$StockPrice, months(IBM$Date), mean)
+
+tapply(ProcterGamble$StockPrice, months(ProcterGamble$Date), mean)
+
+tapply(Boeing$StockPrice, months(Boeing$Date), mean)
+```
+
+General Electric has an average stock price of 64.48 in April, which is higher than any other month. Coca-Cola has an average stock price of 62.69 in April, which is higher than any other month.
+
+### For the months of December and January, every company's average stock is higher in one month and lower in the other. In which month are the stock prices lower?
+
+Having lower stock prices in December is a trend that holds for all five companies.
+
+
+
