@@ -1,0 +1,320 @@
+---
+title: 'Analytics Edge: Unit 1 - Demographics and Employment in the United States '
+author: "Sulman Khan"
+date: "October 24, 2018"
+output: 
+  html_document:
+    css: gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'center', dpi = 100, fig.path = 'figures/NBA/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Background Information on the Dataset
+
+In the wake of the Great Recession of 2009, there has been a good deal of focus on employment statistics, one of the most important metrics policymakers use to gauge the overall strength of the economy. In the United States, the government measures unemployment using the Current Population Survey (CPS), which collects demographic and employment information from a wide range of Americans each month. In this exercise, we will employ the topics reviewed in the lectures as well as a few new techniques using the September 2013 version of this rich, nationally representative dataset (available [online](http://thedataweb.rm.census.gov/ftp/cps_ftp.html).
+
+The observations in the dataset represent people surveyed in the September 2013 CPS who actually completed a survey. While the full dataset has 385 variables, in this exercise we will use a more compact version of the dataset, [CPSData.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/f041f6c100061fc06bc3b6320e6512fa/asset-v1:MITx+15.071x+3T2018+type@asset+block/CPSData.csv), which has the following variables:
+
+
+* **PeopleInHousehold**: The number of people in the interviewee's household.
+
+* **Region**: The census region where the interviewee lives.
+
+* **State**: The state where the interviewee lives.
+
+* **MetroAreaCode**: A code that identifies the metropolitan area in which the interviewee lives (missing if the interviewee does not live in a metropolitan area). The mapping from codes to names of metropolitan areas is provided in the file [MetroAreaCodes.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/fd88455abc1b5b69112daf70f3bb0c77/asset-v1:MITx+15.071x+3T2018+type@asset+block/MetroAreaCodes.csv)
+
+* **Age**: The age, in years, of the interviewee. 80 represents people aged 80-84, and 85 represents people aged 85 and higher.
+
+* **Married*: The marriage status of the interviewee.
+
+* **Sex**: The sex of the interviewee.
+
+* **Education**: The maximum level of education obtained by the interviewee.
+
+* **Race*: The race of the interviewee.
+
+* **Hispanic**: Whether the interviewee is of Hispanic ethnicity.
+
+* **CountryOfBirthCode**: A code identifying the country of birth of the interviewee. The mapping from codes to names of countries is provided in the file [CountryCodes.csv](https://prod-edxapp.edx-cdn.org/assets/courseware/v1/763710fa6703caea1cf9c708e31e99a3/asset-v1:MITx+15.071x+3T2018+type@asset+block/CountryCodes.csv)
+
+* **Citizenship**: The United States citizenship status of the interviewee.
+
+* **EmploymentStatus*: The status of employment of the interviewee.
+
+* **Industry**: The industry of employment of the interviewee (only available if they are employed).
+
+
+In this problem, we'll take a look at how the stock dynamics of these companies have changed over time.
+
+## R Exercises
+
+
+Load the dataset from CPSData.csv into a data frame called CPS, and view the dataset with the summary() and str() commands.
+
+``` {r CPSData}
+CPS = read.csv("CPSData.csv")
+MetroAreaMap = read.csv("MetroAreaCodes.csv")
+CountryMap = read.csv("CountryCodes.csv")
+```
+
+### How many interviewees are in the dataset?
+
+``` {r Intervieweesdata}
+str(CPS)
+```
+
+**Explanation**: From str(CPS), we can read that there are 131302 interviewees.
+
+### Among the interviewees with a value reported for the Industry variable, what is the most common industry of employment?
+```{r summarycps}
+summary(CPS)
+
+table(CPS$Industry)
+```
+
+**Explanation**: The output of summary(CPS) orders the levels of a factor variable like Industry from largest to smallest, so we can see that "Educational and health services" is the most common Industry. table(CPS$Industry) would have provided the breakdown across all industries.
+
+### Which state has the fewest interviewees?
+```{r sorttableCPSState}
+sort(table(CPS$State))
+```
+
+New Mexico.
+
+### Which state has the largest number of interviewees?
+```{r sorttableCPSStatelargest}
+sort(table(CPS$State))
+```
+
+California.
+
+### What proportion of interviewees are citizens of the United States?
+```{r CPSCitizenShip}
+table(CPS$Citizenship)
+
+m = table(CPS$Citizenship)
+
+(m[1]+m[2])/(m[1]+m[2]+m[3])
+
+```
+
+**Explanation**: From table(CPS$Citizenship), we see that 123,712 of the 131,302 interviewees are citizens of the United States (either native or naturalized). This is a proportion of 123712/131302=0.942.
+
+### For which races are there at least 250 interviewees in the CPS dataset of Hispanic ethnicity?
+```{r racehispanic}
+table(CPS$Race, CPS$Hispanic) >=250
+```
+
+**Explanation**: The breakdown of race and Hispanic ethnicity can be obtained with table(CPS$Race, CPS$Hispanic).
+
+### Which variables have at least one interviewee with a missing (NA) value?
+```{r naCocaCOla}
+summary(CPS)
+```
+**Explanation**: This can be read from the output of summary(CPS).
+
+### Often when evaluating a new dataset, we try to identify if there is a pattern in the missing values in the dataset.
+```{r missingdata}
+table(CPS$Region, is.na(CPS$Married))
+
+table(CPS$Sex, is.na(CPS$Married))
+
+table(CPS$Age, is.na(CPS$Married))
+
+table(CPS$Citizenship, is.na(CPS$Married))
+```
+
+
+**Explanation**: For each possible value of Region, Sex, and Citizenship, there are both interviewees with missing and non-missing Married values. However, Married is missing for all interviewees Aged 0-14 and is present for all interviewees aged 15 and older. This is because the CPS does not ask about marriage status for interviewees 14 and younger.
+
+### How many states had all interviewees living in a non-metropolitan area (aka they have a missing MetroAreaCode value)?
+
+``` {r metroareamissingdata}
+table(CPS$State, is.na(CPS$MetroAreaCode))
+```
+
+2.
+
+### How many states had all interviewees living in a metropolitan area?
+
+``` {r metroareamissingdatametro}
+table(CPS$State, is.na(CPS$MetroAreaCode))
+```
+
+3.
+
+### Which region of the United States has the largest proportion of interviewees living in a non-metropolitan area?
+
+``` {r largestregioninterviewees}
+m = table(CPS$Region, is.na(CPS$MetroAreaCode))
+
+prop.table(m,1)
+```
+
+**Explanation**: We can then compute the proportion of interviewees in each region that live in a non-metropolitan area: 34.8% in the Midwest, 21.6% in the Northeast, 23.8% in the South, and 24.4% in the West.
+
+### Which state has a proportion of interviewees living in a non-metropolitan area closest to 30%?
+
+``` {r sort tapply}
+sort(tapply(is.na(CPS$MetroAreaCode), CPS$State, mean))
+```
+
+Wisconsin.
+
+### Which state has the largest proportion of non-metropolitan interviewees, ignoring states where all interviewees were non-metropolitan?
+
+``` {r sort tapplys}
+sort(tapply(is.na(CPS$MetroAreaCode), CPS$State, mean))
+```
+
+Montana
+
+## Integrating Metropolitan Area Data
+
+Codes like MetroAreaCode and CountryOfBirthCode are a compact way to encode factor variables with text as their possible values, and they are therefore quite common in survey datasets. In fact, all but one of the variables in this dataset were actually stored by a numeric code in the original CPS datafile.
+
+When analyzing a variable stored by a numeric code, we will often want to convert it into the values the codes represent. To do this, we will use a dictionary, which maps the the code to the actual value of the variable. We have provided dictionaries MetroAreaCodes.csv and CountryCodes.csv, which respectively map MetroAreaCode and CountryOfBirthCode into their true values. Read these two dictionaries into data frames MetroAreaMap and CountryMap.
+
+### How many observations (codes for metropolitan areas) are there in MetroAreaMap?
+
+``` {r strMetroArea}
+str(MetroAreaMap)
+```
+
+271.
+
+### How many observations (codes for metropolitan areas) are there in MetroAreaMap?
+
+``` {r strMCountryMap}
+str(CountryMap)
+```
+
+149.
+
+To merge in the metropolitan areas, we want to connect the field MetroAreaCode from the CPS data frame with the field Code in MetroAreaMap. The following command merges the two data frames on these columns, overwriting the CPS data frame with the result:
+
+``` {r MergeData}
+CPS = merge(CPS, MetroAreaMap, by.x="MetroAreaCode", by.y="Code", all.x=TRUE)
+```
+
+### What is the name of the variable that was added to the data frame by the merge() operation?
+
+``` {r summaryCPSaddedd}
+summary(CPS)
+```
+
+MetroArea
+
+### How many interviewees have a missing value for the new metropolitan area variable? 
+
+``` {r summaryCPSaddeddnew}
+summary(CPS)
+```
+
+34238.
+
+### Which of the following metropolitan areas has the largest number of interviewees? 
+
+``` {r MetroAreasummary}
+sort(table(CPS$MetroArea))
+```
+
+**Explanation**: From table(CPS$MetroArea), we can read that Boston-Cambridge-Quincy, MA-NH has the largest number of interviewees of these options, with 2229.
+
+### Which metropolitan area has the highest proportion of interviewees of Hispanic ethnicity? 
+
+``` {r tapplyhispanicmetroareamean}
+sort(tapply(CPS$Hispanic, CPS$MetroArea, mean))
+```
+
+**Explanation**: 96.6% of the interviewees from Laredo, TX, are of Hispanic ethnicity, the highest proportion among metropolitan areas in the United States.
+
+### Determine the number of metropolitan areas in the United States from which at least 20% of interviewees are Asian?
+
+``` {r tapplyasianmetroareamean}
+sort(tapply(CPS$Race == "Asian", CPS$MetroArea, mean))
+```
+
+**Explanation**: We can read from the sorted output that Honolulu, HI; San Francisco-Oakland-Fremont, CA; San Jose-Sunnyvale-Santa Clara, CA; and Vallejo-Fairfield, CA had at least 20% of their interviewees of the Asian race.
+
+Normally, we would look at the sorted proportion of interviewees from each metropolitan area who have not received a high school diploma with the command:
+
+``` {r nohighschooldiploma}
+sort(tapply(CPS$Education == "No high school diploma", CPS$MetroArea, mean))
+```
+
+### Determine which metropolitan area has the smallest proportion of interviewees who have received no high school diploma?
+
+``` {r tapplyanohighschooldiploma}
+sort(tapply(CPS$Education == "No high school diploma", CPS$MetroArea, mean, na.rm=TRUE))
+```
+
+**Explanation**: We can see that Iowa City, IA had 2.9% of interviewees not finish high school, the smallest value of any metropolitan area.
+
+## Integrating Country of Birth Data
+
+``` {r MergeCountryMap}
+CPS = merge(CPS, CountryMap, by.x="CountryOfBirthCode", by.y="Code", all.x=TRUE)
+```
+
+### What is the name of the variable added to the CPS data frame by this merge operation? How many interviewees have a missing value for the new country of birth variable?
+
+``` {r cpscountrymapmerge}
+summary(CPS)
+```
+
+**Explanation**: From summary(CPS), we can read that Country is the name of the added variable, and that it has 176 missing values.
+
+### Among all interviewees born outside of North America, which country was the most common place of birth?
+
+``` {r CountryMapsortcode}
+ sort(table(CPS$Country))
+```
+
+**Explanation**: From the summary(CPS) output, or alternately sort(table(CPS$Country)), we see that the top two countries of birth were United States and Mexico, both of which are in North America. The third highest value, 839, was for the Philippines.
+
+
+### What proportion of the interviewees from the "New York-Northern New Jersey-Long Island, NY-NJ-PA" metropolitan area have a country of birth that is not the United States? 
+
+``` {r cpsmetroareaproptable}
+m = table(CPS$MetroArea == "New York-Northern New Jersey-Long Island, NY-NJ-PA", CPS$Country != "United States")
+
+prop.table(m,1)
+
+```
+
+**Explanation**: From table(CPS\$MetroArea == "New York-Northern New Jersey-Long Island, NY-NJ-PA", CPS$Country != "United States"), we can see that 1668 of interviewees from this metropolitan area were born outside the United States and 3736 were born in the United States (it turns out an additional 5 have a missing country of origin). Therefore, the proportion is 1668/(1668+3736)=0.309.
+
+### Which metropolitan area has the largest number (note -- not proportion) of interviewees with a country of birth in India? In Brazil? In Somalia?
+
+``` {r sortapplylargenumberofinterviewwees}
+sort(tapply(CPS$Country == "India", CPS$MetroArea, sum, na.rm=TRUE))
+
+
+sort(tapply(CPS$Country == "Brazil", CPS$MetroArea, sum, na.rm=TRUE))
+
+
+sort(tapply(CPS$Country == "Somalia", CPS$MetroArea, sum, na.rm=TRUE))
+
+```
+
+**Explanation**: We see that New York has the most interviewees born in India (96), Boston has the most born in Brazil (18), and Minneapolis has the most born in Somalia (17).
+
+
+
+
