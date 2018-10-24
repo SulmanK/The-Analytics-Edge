@@ -1,0 +1,367 @@
+---
+title: 'Analytics Edge: Unit 1'
+author: "Sulman Khan"
+date: "October 23, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introduction to Analytics Edge
+
+### Prevalence of Data
+
+* 2.7 Zettabytes of  electronic data exist in the world 
+today - 2,700,000,000,000,000,000,000 bytes 
+    + This is equal to the storage required for more than 200 
+billion HD movies
+* New data is produced at an exponential rate
+* Decoding the human genome originally took 10 years 
+to process; now it can be achieved in one week 
+
+### Data and Analytics are Useful
+
+* Estimated that there is a shortage of  140,000 - 190,000 
+people with deep analytical skills to fill the demand of  
+jobs in the U.S. by 2018 
+* IBM has invested over $20 billion since 2005 to grow its 
+analytics business 
+* Companies will invest more than $120 billion by 2015 on 
+analytics, hardware, software and services 
+* Critical in almost every industry 
+    + Healthcare, media, sports, finance, government, etc.
+    
+### Definition of Analytics
+The science of using **data** to build **models** that lead to better **decisions** that add **value** to individuals, to companies, and to institutions.
+
+
+### Examples of Data Anlytics Used
+#### IBM Watson
+
+* Watson is a supercomputer with 3,000 processors 
+and a database of 200 million pages of information 
+* Watson combined many algorithms to increase 
+accuracy and confidence 
+* Approached the problem in a different way than how 
+a human does 
+* Deals with massive amounts of  data, often in 
+unstructured form 
+    + 90% of data in the world is unstructured 
+
+
+#### eHarmony
+* Online dating site focused on long term relationships 
+* Relies much more on data than other dating sites 
+* Suggests a limited number of high quality matches
+    + Users don't have to search and dig through profiles 
+* eHarmony has successfully leveraged the power of  
+analytics to create a successful and thriving business 
+    + 14% of US online dating market 
+    
+#### The Framingham Heart Study
+* Much of the now-common knowledge regarding heart disease came from this study
+* Provided necessary evidence for the development of drugs to lower blood pressure 
+* Paved the way for other clinical prediction rules
+    + Predict clinical outcomes using patient data
+* A model allows medical professionals to make predictions for patients worldwide 
+
+#### D2Hawkeye
+* Combined data with analytics to improve quality and 
+cost management in healthcare 
+* Substantial improvement in D2Hawkeye's ability to 
+identify patients who need more attention 
+* Use expert knowledge to identify new variables and 
+refine existing variables 
+* Can make predictions for millions of  patients 
+without manually reading patient files 
+
+## An Introduction to R
+
+### What is R?
+* A software environment for data analysis, statistical computing, and graphics 
+* A programming language 
+
+In the next section, the basic operations and functions used in R for data analysis are explored.
+
+### Basic Calculations
+```{r Basic Calculations}
+8*6
+2^16
+8*6
+8*10
+```
+
+### Functions
+``` {r Functions}
+sqrt(2)
+abs(-65)
+```
+
+### Variables
+``` {r Variables}
+SquareRoot2 = sqrt(2)
+SquareRoot2
+HoursYear <- 365*24
+HoursYear
+ls()
+```
+
+### Vectors
+Two vectors - **Country** and **LifeExpectancy** are created. Accordingly, both vectors are indexed to display specific elements inside the vectors. Finally, a third vector **Sequence** has a range from 0 to 100 in increments of 2.
+``` {r Vectors}
+c(2,3,5,8,13)
+Country = c("Brazil", "China", "India","Switzerland","USA")
+LifeExpectancy = c(74,76,65,83,79)
+Country
+LifeExpectancy
+Country[1]
+LifeExpectancy[3]
+Sequence = seq(0,100,2)
+Sequence
+```
+### Data Frames
+The data.frame **CountryData** calls upon the two vectors **Country** and **LifeExpectancy**. Successivly, an additional vector **CountryData$Populations** is added to the data.frame. Finally, a data.frame **AllCountryData** utilizes the two previous data.frames **CountryData** and **NewCountryData**.
+``` {r Data Frames}
+CountryData = data.frame(Country, LifeExpectancy)
+CountryData
+CountryData$Population = c(199000,1390000,1240000,7997,318000)
+CountryData
+Country = c("Australia","Greece")
+LifeExpectancy = c(82,81)
+Population = c(23050,11125)
+NewCountryData = data.frame(Country, LifeExpectancy, Population)
+NewCountryData
+AllCountryData = rbind(CountryData, NewCountryData)
+AllCountryData
+```
+
+### Loading csv files
+The dataset **WHO.csv** is loaded into the variable **WHO**. The str and summary commands provide physical and statistical descriptions of the variable. 
+``` {r Loading csv files}
+WHO = read.csv("WHO.csv")
+str(WHO)
+summary(WHO)
+```
+### Subsetting
+The dataset **WHO** is subsetted into **WHO_Europe** using the region as an argument to collect the data.
+``` {r Subsetting}
+WHO_Europe = subset(WHO, Region == "Europe")
+str(WHO_Europe)
+```
+### Writing csv files
+``` {r Writing csv files}
+write.csv(WHO_Europe, "WHO_Europe.csv")
+```
+### Removing variables
+``` {r Removing variables}
+rm(WHO_Europe)
+```
+
+### Basic Data Analysis
+Various basic data analysis commands are implemented to provide a statistical summary of the datasets and how to appropriately identify various elements of interest.
+``` {r Basic Data Analysis}
+mean(WHO$Under15)
+sd(WHO$Under15)
+summary(WHO$Under15)
+
+which.min(WHO$Under15)
+WHO$Country[86]
+
+which.max(WHO$Under15)
+WHO$Country[124]
+```
+
+### Scatterplot
+``` {r Scatterplot}
+plot(WHO$GNI, WHO$FertilityRate)
+```
+
+### Subsetting Outliers
+``` {r Subsetting Outliers}
+Outliers = subset(WHO, GNI > 10000 & FertilityRate > 2.5) 
+nrow(Outliers)
+Outliers[c("Country","GNI","FertilityRate")]
+```   
+
+### Histograms
+``` {r Histogram}
+hist(WHO$CellularSubscribers)
+```
+### Boxplot
+``` {r Boxplot}
+boxplot(WHO$LifeExpectancy ~ WHO$Region)
+boxplot(WHO$LifeExpectancy ~ WHO$Region, xlab = "", ylab = "Life Expectancy", main = "Life Expectancy of Countries by Region")
+```
+
+### Summary Tables
+The **table** command creates a table for each region in the **WHO** data.frame.
+The **tapply** command demonstrates the relationship between two vectors in the data.frame using a statistical descriptor.
+``` {r Summary Tables}
+table(WHO$Region)
+
+tapply(WHO$Over60, WHO$Region, mean)
+tapply(WHO$LiteracyRate, WHO$Region, min)
+tapply(WHO$LiteracyRate, WHO$Region, min, na.rm=TRUE)
+```
+
+## Understanding Food USDA Dataset
+In the following section, the United States Department of Agriculture (USDA) dataset on the dietary contents of food is examined.
+
+
+### Loading in the Dataset
+#### Read the csv file
+``` {r USDA_read}
+  USDA = read.csv("USDA.csv")
+```
+
+#### Structure of the dataset
+``` {r USDA_str}
+  str(USDA)
+```
+
+#### Statistical summary
+``` {r USDA_summary}
+  summary(USDA)
+````
+
+### Basic Data Analysis
+
+#### Vector notation
+``` {r USDA_vector_notation, results = FALSE }
+  USDA$Sodium
+```
+
+#### Finding the index of the food with highest sodium levels
+``` {r USDA_indexSodium}
+  which.max(USDA$Sodium)
+```
+
+#### Get names of variables in the dataset
+``` {r USDA_names}
+  names(USDA)
+```
+
+#### Get the name of the food with highest sodium levels
+``` {r USDA_HighestSodiumDescription}
+  USDA$Description[265]
+```
+
+#### Create a subset of the foods with sodium content above 10,000mg
+``` {r USDA_HighSodiumSubset}
+  HighSodium = subset(USDA, Sodium>10000)
+```
+
+#### Count the number of rows, or observations
+``` {r USDA_nrowsHighSodium}
+nrow(HighSodium)
+```
+
+#### Output names of the foods with high sodium content
+``` {r USDA_outputHighSodium}
+  HighSodium$Description
+```
+
+#### Finding the index of CAVIAR in the dataset
+``` {r USDA_CaviarIndex}
+  match("CAVIAR", USDA$Description)
+```
+
+#### Find amount of sodium in caviar
+``` {r USDA_indexSodium4154}
+  USDA$Sodium[4154]
+```
+
+#### Doing it in one command!
+``` {r USDA_CaviarIndexSodium}
+  USDA$Sodium[match("CAVIAR", USDA$Description)]
+```
+
+#### Summary function over Sodium vector
+``` {r USDA_SodiumSummary}
+  summary(USDA$Sodium)
+```
+
+#### Standard deviation
+``` {r USDA_SDSodium}
+  sd(USDA$Sodium, na.rm = TRUE)
+```
+
+## Plots of USDA Dataset
+### Scatter Plots
+
+``` {r USDA_ScatterPlotbase}
+  plot(USDA$Protein, USDA$TotalFat)
+```
+
+#### Add xlabel, ylabel and title
+``` {r USDA_ScatterPlotlabels}
+  plot(USDA$Protein, USDA$TotalFat, xlab="Protein", ylab = "Fat", main = "Protein vs Fat", col = "red")
+````
+
+### Histograms
+``` {r USDA_Histogrambase}
+  hist(USDA$VitaminC, xlab = "Vitamin C (mg)", main = "Histogram of Vitamin C")
+```
+
+#### Add limits to x-axis
+``` {r USDA_Histogramxlimits}
+  hist(USDA$VitaminC, xlab = "Vitamin C (mg)", main = "Histogram of Vitamin C", xlim = c(0,100))
+```
+
+#### Specify breaks of histogram
+``` {r USDA_Histogrambreaks}
+  hist(USDA$VitaminC, xlab = "Vitamin C (mg)", main = "Histogram of Vitamin C", xlim = c(0,100), breaks=100)
+  hist(USDA$VitaminC, xlab = "Vitamin C (mg)", main = "Histogram of Vitamin C", xlim = c(0,100), breaks=2000)
+```
+
+### Boxplots
+``` {r USDA_boxplotSugar}
+  boxplot(USDA$Sugar, ylab = "Sugar (g)", main = "Boxplot of Sugar")
+```
+
+## Adding a variable
+
+### Creating a variable that takes value 1 if the food has higher sodium than average, 0 otherwise
+``` {r USDA_creatingvar}
+  HighSodium = as.numeric(USDA$Sodium > mean(USDA$Sodium, na.rm=TRUE))
+  str(HighSodium)
+```  
+### Adding the variable to the dataset
+``` {r USDA_addingvariabletothedataset}
+  USDA$HighSodium = as.numeric(USDA$Sodium > mean(USDA$Sodium, na.rm=TRUE))
+```
+
+### Similarly for HighProtein, HigCarbs, HighFat
+``` {r USDA_AdditionalvariablesforPCF}
+  USDA$HighCarbs = as.numeric(USDA$Carbohydrate > mean(USDA$Carbohydrate, na.rm=TRUE))
+  USDA$HighProtein = as.numeric(USDA$Protein > mean(USDA$Protein, na.rm=TRUE))
+  USDA$HighFat = as.numeric(USDA$TotalFat > mean(USDA$TotalFat, na.rm=TRUE))
+```
+
+## Summary Tables
+
+### How many foods have higher sodium level than average?
+``` {r USDA_tableHS}
+  table(USDA$HighSodium)
+```
+
+### How many foods have both high sodium and high fat?
+``` {r USDA_tableHS&HF}
+  table(USDA$HighSodium, USDA$HighFat)
+```
+
+### Average amount of iron sorted by high and low protein?
+``` {r USDA_tapplyIHPmean}
+  tapply(USDA$Iron, USDA$HighProtein, mean, na.rm=TRUE)
+```
+
+### Maximum level of Vitamin C in hfoods with high and low carbs?
+``` {r USDA_tapplyVCHCmax}
+  tapply(USDA$VitaminC, USDA$HighCarbs, max, na.rm=TRUE)
+```
+
+### Using summary function with tapply
+``` {r USDA_tapplyVCHCsummary}
+  tapply(USDA$VitaminC, USDA$HighCarbs, summary, na.rm=TRUE)
+```
