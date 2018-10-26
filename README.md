@@ -10,6 +10,9 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
   * [Unit 1 : An Analytical Detective](http://rpubs.com/SulmanKhan/432542)
   * [Unit 1 : Stock Dynamics](http://rpubs.com/SulmanKhan/432564)
   * [Unit 1 :  Demographics and Employment in the United States](http://rpubs.com/SulmanKhan/432582)
-  * [Unit 1 :  An Introduction to Text Analytics](http://rpubs.com/SulmanKhan/433432)
+  * [Unit 5 :  An Introduction to Text Analytics](http://rpubs.com/SulmanKhan/433432)
+  
+  
+  
 -Sulman Khan
 
