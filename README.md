@@ -7,12 +7,12 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
 
 * [Table of Contents](http://rpubs.com/SulmanKhan/432517) 
 * [Unit 1 : An Introduction to Analytics](http://rpubs.com/SulmanKhan/432513)
-* [Unit 1 : An Analytical Detective](http://rpubs.com/SulmanKhan/432542)
-* [Unit 1 : Stock Dynamics](http://rpubs.com/SulmanKhan/432564)
-* [Unit 1 : Demographics and Employment in the United States](http://rpubs.com/SulmanKhan/432582)
+    * [Unit 1 : An Analytical Detective](http://rpubs.com/SulmanKhan/432542)
+    * [Unit 1 : Stock Dynamics](http://rpubs.com/SulmanKhan/432564)
+    * [Unit 1 : Demographics and Employment in the United States](http://rpubs.com/SulmanKhan/432582)
 * [Unit 5 : An Introduction to Text Analytics](http://rpubs.com/SulmanKhan/433432)
-* [Unit 5 : Predictive Coding](http://rpubs.com/SulmanKhan/433456)
-* [Unit 5 : Detecting Vandalism on Wikipedia](http://rpubs.com/SulmanKhan/433730)
+    * [Unit 5 : Predictive Coding](http://rpubs.com/SulmanKhan/433456)
+    * [Unit 5 : Detecting Vandalism on Wikipedia](http://rpubs.com/SulmanKhan/433730)
 
   
   
