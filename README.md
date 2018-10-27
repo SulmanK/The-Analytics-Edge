@@ -13,7 +13,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
 * [Unit 5 : An Introduction to Text Analytics](http://rpubs.com/SulmanKhan/433432)
     * [Unit 5 : Predictive Coding](http://rpubs.com/SulmanKhan/433456)
     * [Unit 5 : Detecting Vandalism on Wikipedia](http://rpubs.com/SulmanKhan/433730)
-
+    * [Unit 5 : Automating Reviews in Medicine](http://rpubs.com/SulmanKhan/433749)
   
   
 -Sulman Khan
