@@ -14,7 +14,9 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 5 : Predictive Coding](http://rpubs.com/SulmanKhan/433456)
     * [Unit 5 : Detecting Vandalism on Wikipedia](http://rpubs.com/SulmanKhan/433730)
     * [Unit 5 : Automating Reviews in Medicine](http://rpubs.com/SulmanKhan/433749)
-  
+    * [Unit 5 : Separating Spam from Ham (Part 1)](http://rpubs.com/SulmanKhan/433781)
+    
+
   
 -Sulman Khan
 
