@@ -1,0 +1,257 @@
+---
+title: 'Analytics Edge: Unit 5 - Predictive Coding'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/PredictiveCoding/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Bringing Text Analytics to the Courtroom
+
+### Enron Corporation
+
+* U.S. energy company from Houston, Texas
+
+* Produced and distributed power
+
+* Market capitalization exceeded $60 billion 
+
+* *Forbes*: Most Innovative U.S. Company, 1996-2001 
+
+* Widespread accounting fraud exposed in 2001
+    + Led to bankruptcy, the largest ever at that time
+    + Led major accounting firm Arthur Andersen to dissolve 
+
+* Symbol of corporate corruption 
+
+### California Energy Crsis
+
+* California is most populous state in United States
+
+* In 2000-2001, plagued by blackouts despite having plenty of  power plants 
+
+* Enron played a key role in causing crisis
+    + Reduced supply to state to cause price spikes
+    + Made trades to profit from the market instability
+
+* Federal Energy Regulatory Commission (FERC) investigated Enron's involvemen
+    + Eventually led to $1.52 billion settlement 
+    + Topic of today's recitation
+
+### The eDiscovery Problem
+
+* Enron had millions of electronic files 
+
+* Leads to the eDiscovery problem: how we find files relevant to a lawsuit? 
+    + In legal parlance, searching for responsive documents 
+
+* Traditionally, keyword search followed by manual review
+    + Tedious process
+    + Expensive, time consuming
+
+* More recently: *predictive coding (technology-assisted review)*
+    + Manually label some of the documents to train models 
+    + Apply models to much larger set of documents
+
+### The Enron Corpus
+* FERC publicly released emails from Enron
+
+* \>600,000 emails, 158 users (mostly senior management) 
+
+* Largest publicly available set of emails 
+
+* Dataset we will use for predictive coding
+
+* We will use labeled emails from the 2010 Text 
+Retrieval Conference Legal Track 
+    + *email* - text of  the message
+    + *responsive* - does email relate to energy schedules or bids?
+
+### Predictive Coding Today
+* In legal system, difficult to change existing practices
+    + System based *past precedent*
+    + eDiscovery historically performed by keyword search coupled with manual review
+
+* 2012 U.S. District Court ruling: predictive coding is legitimate eDiscovery tool
+
+* Use likely to expand in coming years
+
+## Enron Dataset in R
+
+
+### Load the dataset
+``` {r LoadData}
+emails = read.csv("energy_bids.csv", stringsAsFactors=FALSE)
+
+str(emails)
+```
+
+### Look at emails
+``` {r examineEmails}
+emails$email[1]
+emails$responsive[1]
+ 
+emails$email[2]
+emails$responsive[2]
+```
+
+### Responsive emails
+``` {r responvieEmails}
+table(emails$responsive)
+```
+
+
+### Load tm package
+```{r LoadTM}
+library(tm)
+```
+
+### Create corpus
+```{r LoadCorpus}
+corpus = VCorpus(VectorSource(emails$email))
+
+corpus[[1]]$content
+
+```
+
+### Pre-process data
+```{r preprocessdata}
+corpus = tm_map(corpus, content_transformer(tolower))
+
+corpus = tm_map(corpus, removePunctuation)
+
+corpus = tm_map(corpus, removeWords, stopwords("english"))
+
+corpus = tm_map(corpus, stemDocument)
+```
+
+### Look at first email
+```{r lookatfirstemail}
+corpus[[1]]$content
+```
+
+### Create matrix
+```{r creatematrix}
+
+dtm = DocumentTermMatrix(corpus)
+dtm
+```
+
+### Remove sparse terms
+```{r removesparseterms}
+dtm = removeSparseTerms(dtm, 0.97)
+dtm
+```
+
+### Create data frame
+```{r Createdataframe}
+labeledTerms = as.data.frame(as.matrix(dtm))
+```
+
+### Add in the outcome variable
+```{r outcomevariable}
+labeledTerms$responsive = emails$responsive
+
+str(labeledTerms)
+```
+
+
+### Split the data
+```{r SplitTheData}
+library(caTools)
+
+set.seed(144)
+
+spl = sample.split(labeledTerms$responsive, 0.7)
+
+train = subset(labeledTerms, spl == TRUE)
+test = subset(labeledTerms, spl == FALSE)
+```
+
+### Build a CART model
+```{r BuildACartModel}
+library(rpart)
+library(rpart.plot)
+
+emailCART = rpart(responsive~., data=train, method="class")
+
+prp(emailCART)
+```
+
+
+### Make predictions on the test set
+```{r predictcart}
+
+pred = predict(emailCART, newdata=test)
+pred[1:10,]
+pred.prob = pred[,2]
+```
+
+### Compute accuracy
+```{r DiagAccuracyCart}
+table(test$responsive, pred.prob >= 0.5)
+a = table(test$responsive, pred.prob >= 0.5)
+
+sum(diag(a))/sum(a)
+(195+25)/(195+25+17+20)
+```
+
+### Baseline model accuracy
+However, as in most document retrieval applications,
+there are uneven costs for different types of errors here. Typically, a human will still have to manually review all of the predicted responsive documents to make sure they are actually responsive. Therefore, if we have a false positive, in which a non-responsive document is labeled as responsive, the mistake translates to a bit of additional work in the manual review process but no further harm, since the manual review process will remove this erroneous result. But on the other hand, if we have a false negative, in which a responsive document is labeled as non-responsive by our model, we will miss the document entirely in our predictive coding process. Therefore, we're going to assign a higher cost to false negatives than to false positives, which makes this a good time to look at other cut-offs on our ROC curve.
+
+```{r baselinemodelacc}
+table(test$responsive)
+a = table(test$responsive)
+a[1]/sum(a)
+215/(215+42)
+```
+
+### ROC curve
+Now, of course, the best cutoff to select
+is entirely dependent on the costs assigned by the decision maker to false positives and true positives. However, again, we do favor cutoffs
+that give us a high sensitivity. We want to identify a large number of the responsive documents, where we have a true positive rate of around 70%, meaning that we're getting about 70% of all the responsive documents, and a false positive rate of about 20%, meaning that we're making mistakes and accidentally identifying as responsive 20% of the non-responsive documents.
+Now, the vast majority of documents are non-responsive, operating at this cutoff would result, perhaps, in a large decrease
+in the amount of manual effort needed
+in the eDiscovery process. And we can see from the blue color of the plot at this particular location
+that we're looking at a threshold around maybe 0.15
+or so, significantly lower than 50%, which is definitely what we would expect since we favor
+false positives to false negatives. 
+
+```{r ROCR}
+library(ROCR)
+
+predROCR = prediction(pred.prob, test$responsive)
+
+perfROCR = performance(predROCR, "tpr", "fpr")
+
+plot(perfROCR, colorize=TRUE)
+```
+
+
+### Compute AUC
+
+Lastly, we can use the ROCR package to compute our AUC value.
+Call the performance function with our prediction object, this time extracting the AUC value and just grabbing the y value slot of it.
+We can see that we have an AUC in the test set of 79.4%, which means that our model can differentiate
+between a randomly selected responsive and non-responsive document about 80% of the time.
+
+```{r AUC}
+performance(predROCR, "auc")@y.values

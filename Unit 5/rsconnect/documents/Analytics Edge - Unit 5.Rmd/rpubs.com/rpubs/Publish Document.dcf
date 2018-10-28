@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/433432/4486e43166ac47f483a1ce52192f5fa7
+bundleId: https://api.rpubs.com/api/v1/document/433432/4486e43166ac47f483a1ce52192f5fa7
+url: http://rpubs.com/SulmanKhan/433432
+when: 1540553597.05036

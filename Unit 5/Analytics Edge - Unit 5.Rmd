@@ -1,0 +1,470 @@
+---
+title: 'Analytics Edge: Unit 5 - An Introduction to Text Analytics'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## TURNING TWEETS INTO KNOWLEDGE 
+
+### Twitter
+
+* Twitter is a social networking and communication 
+website founded in 2006 
+
+* Users share and send messages that can be no longer than 140 characters long 
+
+* One of the Top 10 most-visited sites on the internet
+
+### Impact of Twitter
+
+* Use by protestors across the world
+
+* Natural disaster notification, tracking of  diseases 
+
+* Companies will invest more than $120 billion by 2015 on analytics, hardware, software and services 
+
+* Celebrities, politicians, and companies connect with fans and customers 
+    
+### Understanding People
+
+* Many companies maintain online presences
+
+* Managing public perception in age of  instant 
+communication essential 
+
+* How can we use analytics to address this?
+
+### Using Text as Data
+
+* Until now, our data has typically been
+    + Structured
+    + Numerical
+    + Categorical
+
+* Tweets are 
+    + Loosely structured 
+    + Textual 
+    + Poor spelling, non-traditional grammar 
+    + Multilingual
+
+### Text Analytics
+
+* We have discussed why people care about textual 
+data, but how do we handle it? 
+
+* Humans can't keep up with Internet-scale volumes of data 
+
+### How Can Computers Help?
+
+* Computers need to understand text 
+
+* This field is called **Natural Language Processing**
+
+### Why is it Hard?
+
+* Computers need to understand text 
+
+* Ambiguity: 
+    + "I put my bag in the car. It is large and blue" 
+    + "It" = bag? "It" = car?
+
+### Creating the Dataset
+
+* Twitter data is publically available
+    + Scrape website, or 
+    + Use special interface for programmers (API) 
+    + Sender of tweet may be useful, but we will ignore
+    
+* Need to construct the outcome variable for tweets 
+    + Thousands of tweets
+    + Two people may disagree over the correct classification
+
+### A Bag of Words
+
+* Fully understanding text is difficult
+
+* Simpler approach
+
+    + ** Count the number of times each words appears**
+  
+* "This course is great. I would recommend this course to my friends."
+
+```{r echo = FALSE, results = 'asis'}
+library(knitr)
+WORDS = c( "THIS", "COURSE" , "GREAT" , "..." , "WOULD", "FRIENDS")
+Numberoftimes = c(2,2,1,"...",1,1)
+WordsNumberoftimes = data.frame (WORDS, Numberoftimes)
+
+kable(WordsNumberoftimes)
+```
+
+### A simple but Effective Approach
+
+* One feature for each word - a simple approach, but effective 
+
+* Used as a baseline in text analytics projects and natural language processing 
+
+* Not the whole story though - preprocessing can dramatically improve performance! 
+
+### Text Analytics in General
+
+* Selecting the specific features that are relevant in the application
+
+* Applying problem specific knowledge can get better results 
+    + Meaning of symbols
+    + Features like number of words
+
+### The Analytics Edge
+
+* Analytical sentiment analysis can replace more labor-intensive methods like polling 
+
+* Text analytics can deal with the massive amounts of unstructured data being generated on the internet
+
+* Computers are becoming more and more capable of interacting with humans and performing human tasks 
+
+
+## Preprocessing in R
+
+
+### Read in the data
+``` {r Readinthedata}
+tweets = read.csv("tweets.csv", stringsAsFactors=FALSE)
+
+str(tweets)
+```
+
+### Create dependent variable
+``` {r CreateDependentVariable}
+tweets$Negative = as.factor(tweets$Avg <= -1)
+
+table(tweets$Negative)
+```
+
+
+### Install new packages
+``` {r InstallNewPackages}
+library(tm)
+library(SnowballC)
+```
+
+### Create corpus
+``` {r Create Corpus}
+corpus = VCorpus(VectorSource(tweets$Tweet)) 
+
+# Look at corpus
+corpus
+corpus[[1]]$content
+
+```
+
+### Convert to lower-case
+``` {r Converttolowercase}
+corpus = tm_map(corpus, content_transformer(tolower))
+
+corpus[[1]]$content
+```
+
+### Remove punctuation
+``` {r RemovePuncutation}
+corpus = tm_map(corpus, removePunctuation)
+
+corpus[[1]]$content
+```
+
+### Look at stop words 
+``` {r Lookatstopwords}
+stopwords("english")[1:10]
+```
+
+### Remove stopwords and apple
+``` {r removestopwordsapple}
+
+corpus = tm_map(corpus, removeWords, c("apple", stopwords("english")))
+
+corpus[[1]]$content
+```
+
+### Stem document 
+``` {r StemDocument}
+
+corpus = tm_map(corpus, stemDocument)
+
+corpus[[1]]$content
+```
+
+
+### Create matrix
+``` {r CreateMatrix}
+
+frequencies = DocumentTermMatrix(corpus)
+
+frequencies
+```
+
+### Look at matrix 
+```{r LookatMatrix}
+inspect(frequencies[1000:1005,505:515])
+```
+
+### Check for sparsity
+``` {r CheckForSparsity}
+findFreqTerms(frequencies, lowfreq=20)
+```
+
+### Remove sparse terms
+``` {r RemoveSparseTerms}
+sparse = removeSparseTerms(frequencies, 0.995)
+sparse
+```
+
+### Convert to a data frame
+``` {r Converttodataframe}
+tweetsSparse = as.data.frame(as.matrix(sparse))
+```
+
+### Make all variable names R-friendly
+``` {r variablefriendly}
+colnames(tweetsSparse) = make.names(colnames(tweetsSparse))
+```
+
+### Add dependent variable
+``` {r adddependentvariable}
+tweetsSparse$Negative = tweets$Negative
+```
+
+### Split the data
+``` {r SplittheData}
+library(caTools)
+
+set.seed(123)
+
+split = sample.split(tweetsSparse$Negative, SplitRatio = 0.7)
+
+trainSparse = subset(tweetsSparse, split==TRUE)
+testSparse = subset(tweetsSparse, split==FALSE)
+```
+
+
+
+### Build a CART model
+```{r CartModel}
+
+library(rpart)
+library(rpart.plot)
+
+tweetCART = rpart(Negative ~ ., data=trainSparse, method="class")
+
+prp(tweetCART)
+```
+
+### Evaluate the performance of the model
+``` {r evaluateperformance}
+predictCART = predict(tweetCART, newdata=testSparse, type="class")
+
+table(testSparse$Negative, predictCART)
+
+a = table(testSparse$Negative, predictCART)
+```
+
+### Compute accuracy
+```{r ComputeAccuracy}
+
+sum(diag(a))/(sum(a))
+(294+18)/(294+6+37+18)
+```
+
+### Baseline accuracy 
+``` {r Baselineaccuracy}
+table(testSparse$Negative)
+a = table(testSparse$Negative)
+a[1]/(sum(a))
+300/(300+55)
+```
+
+### Random forest model
+```{r randomforestmodel}
+library(randomForest)
+set.seed(123)
+
+tweetRF = randomForest(Negative ~ ., data=trainSparse)
+```
+
+### Make predictions:
+``` {r makepredictions}
+predictRF = predict(tweetRF, newdata=testSparse)
+
+table(testSparse$Negative, predictRF)
+
+a = table(testSparse$Negative, predictRF)
+```
+
+### Random Forest Accuracy
+``` {r RMF Accuracy}
+sum(diag(a))/(sum(a))
+(293+21)/(293+7+34+21)
+```
+
+## Man vs Machine - IBM Watson
+
+### A Grand Challenge
+
+* In 2004, IBM Vice President Charles Lickel and co-
+workers were having dinner at a restaurant 
+
+* All of  a sudden, the restaurant fell silent 
+
+* Everyone was watching the game show *Jeopardy!* on 
+the television in the bar 
+
+* A contestant, Ken Jennings, was setting the record for the longest winning streak of  all time (75 days) 
+
+* Why was everyone so interested? 
+    + *Jeopardy!* is a quiz show that asks complex and clever questions (puns, obscure facts, uncommon words) 
+    + Originally aired in 1964 
+    + A huge variety of  topics 
+    + Generally viewed as an impressive feat to do well 
+    
+### The Challenge Begins
+
+* In 2005, a team at IBM Research started creating a computer that could compete at *Jeopardy!* 
+
+* Six years later, a two-game exhibition match aired on television 
+    + The winner would receive $1,000,000 
+    
+### The Contestants
+
+* Ken Jennings 
+    + Longest winning streak of 75 days
+    
+* Brad Rutter
+    + Biggest money winner of over $3.5 million
+
+* Watson
+    + A supercomputer with 3,000 processors and a database of 200 million pages of information
+    
+### The Game of *Jeopardy!* 
+
+* Three rounds per game
+    + Jeopardy
+    + Douple Jeopardy (dollar values doubled)
+    + Final Jeopardy (wager on response to one question)
+
+* Each round has five questions in six categories
+    + Wide variety of topics (over 2,500 different categories)
+
+* Each question has a dollar value - the first to buzz in and answer correctly wins the money
+    + If they answer incorrectly they lose the money
+
+<center>
+
+![Example Round](figures/ExampleRound.png)
+
+</center>
+
+### *Jeopardy!* Questions
+* Cryptic definitions of categories and clues
+
+* Answer in the form of a question
+    + Q: Mozart's last and perhaps most powerful symphony shares its name with this planet. 
+      - A: What is Jupiter?
+    + Q: Smaller than only Greenland, it's the world's second largest island.
+      - A: What is New Guinea?
+      
+### Why is Jeopardy Hard?
+* Wide variety of categories, purposely made cryptic
+
+* Computers can easily answer precise questions
+
+* Understanding natural language is hard
+    + Where was Albert Einstein born?
+    + Suppose you have the following information:
+        - "One day, from his city views of  Ulm, Otto chose a water color to send to Albert Einstein as a remembrance of  his birthplace." 
+
+### Using Analytics
+* Watson received each question in text form
+    + Normally, players see and hear the questions 
+
+* IBM used analytics to make Watson a competitive 
+player 
+
+* Used over 100 different techniques for analyzing 
+natural language, finding hypotheses, and ranking 
+hypotheses 
+
+
+### Watson's Database and Tools
+* A massive number of data sources
+    + Encyclopedias, texts, manuals, magazines, Wikipedia, etc.
+
+* Lexicon
+    + Describes the relationship between different words
+    + Ex: "Water" is a "clear liquid" but not all "clear liquids" are "water" 
+
+* Part of speech tagger and parser
+    + Identifies functions of words in text
+    + Ex: "Race" can be a verb or a noun
+      - He won the race by 10 seconds.
+      - Please indicate your race.
+      
+### How Watson Works
+* Step 1: Question Analysis
+    + Figure out what the question is looking for
+
+* Step 2: Hypothesis Generation
+    + Search information sources for possible answers
+
+* Step 3: Scoring Hypotheses
+    + Compute confidence levels for each answer 
+
+* Step 4: Final Ranking
+    + Look for a highly supported answer
+
+### Progress from 2006 - 2010
+
+<center>
+
+![IBM Watson's progress from 2006 to 2010](figures/Progressfromm2006to2010.png)
+
+</center>
+
+### The Results
+```{r baby, echo = FALSE, results = 'asis'}
+library(knitr)
+
+Games = c("Game 1", "Game 2", "Total")
+KenJennings = c("$4,800", "$19,200", "$24,000")
+BradRutter = c("$10,400", "$11,200", "$21,600")
+Watson = c("$35,734", "$41,413", "$77,147")
+jeopardy = data.frame (Games, KenJennings, BradRutter, Watson)
+
+kable(jeopardy)
+```
+
+### The Analytics Edge
+* Combine many algorithms to increase accuracy and confidence
+    + Any one algorithm wouldn't have worked
+
+* Approach the problem in a diferent way than how a human does
+    + Hypothesis generaiton
+
+* Deal with massive amounts of data, often in unstructured form
+    + 90% of data is unstructured
