@@ -23,6 +23,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 5 : Separating Spam from Ham (Part 1)](http://rpubs.com/SulmanKhan/433781)
 * [Unit 6 : An Introduction to Clustering](http://rpubs.com/SulmanKhan/435602)
     * [Unit 6 : Clustering to Better Predict Heart Attacks](http://rpubs.com/SulmanKhan/435656)
+    * [Unit 6 : Segmenting Images to Create Data](http://rpubs.com/SulmanKhan/435665)
     
 
 
