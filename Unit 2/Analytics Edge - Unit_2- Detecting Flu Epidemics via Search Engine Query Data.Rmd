@@ -1,0 +1,291 @@
+---
+title: 'Analytics Edge: Unit 2 - Detecting Flu Epidemics via Search Engine Query Data '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Detecting Flu Epidemics via Search Engine Query Data 
+
+### Background Information on the Dataset
+
+Flu epidemics constitute a major public health concern causing respiratory illnesses, hospitalizations, and deaths. According to the National Vital Statistics Reports published in October 2012, influenza ranked as the eighth leading cause of death in 2011 in the United States. Each year, 250,000 to 500,000 deaths are attributed to influenza related diseases throughout the world.
+
+The U.S. Centers for Disease Control and Prevention (CDC) and the European Influenza Surveillance Scheme (EISS) detect influenza activity through virologic and clinical data, including Influenza-like Illness (ILI) physician visits. Reporting national and regional data, however, are published with a 1-2 week lag.
+
+The Google Flu Trends project was initiated to see if faster reporting can be made possible by considering flu-related online search queries -- data that is available almost immediately.
+
+
+
+
+### Dataset Analysis
+
+We would like to estimate influenza-like illness (ILI) activity using Google web search logs. Fortunately, one can easily access this data online:
+
+ILI Data - The CDC publishes on its website the official regional and state-level percentage of patient visits to healthcare providers for ILI purposes on a weekly basis.
+
+Google Search Queries - Google Trends allows public retrieval of weekly counts for every query searched by users around the world. For each location, the counts are normalized by dividing the count for each query in a particular week by the total number of online search queries submitted in that location during the week. Then, the values are adjusted to be between 0 and 1.
+
+The csv file FluTrain.csv aggregates this data from January 1, 2004 until December 31, 2011 as follows:
+
+"Week" - The range of dates represented by this observation, in year/month/day format.
+
+"ILI" - This column lists the percentage of ILI-related physician visits for the corresponding week.
+
+"Queries" - This column lists the fraction of queries that are ILI-related for the corresponding week, adjusted to be between 0 and 1 (higher values correspond to more ILI-related search queries).
+
+Before applying analytics tools on the training set, we first need to understand the data at hand. Load "FluTrain.csv" into a data frame called FluTrain.
+
+```{r loaddatasets}
+FluTrain = read.csv("FluTrain.csv")
+subset(FluTrain, ILI == max(ILI))
+```
+
+#### Which week corresponds to the highest percentage of ILI-related query fraction?
+
+October 18, 2009.
+
+
+#### Plot the histogram of the dependent variable, ILI. What best describes the distribution of values of ILI?
+
+```{r histogram}
+hist(FluTrain$ILI) 
+```
+
+Visually, the data is skew right.
+
+#### Plot the natural logarithm of ILI versus Queries. What does the plot suggest?. 
+
+```{r lnflutrain}
+plot(FluTrain$Queries, log(FluTrain$ILI))
+```
+
+Visually, there is a positive, linear relationship between log(ILI) and Queries.
+
+### Linear Regression Model
+
+Based on the plot we just made, it seems that a linear regression model could be a good modeling choice. Based on our understanding of the data from the previous subproblem, which model best describes our estimation problem?
+
+log(ILI) = intercept + coefficient x Queries, where the coefficient is positive
+
+```{r flutrendmodel1}
+FluTrend1 = lm(log(ILI)~Queries, data=FluTrain)
+```
+
+#### What is the R^2^ value for FluTrend?
+
+```{r rsquaredmodel}
+summary(FluTrend1)
+```
+
+R^2^ = 0.709.
+
+#### What is the relationship we infer from our problem?
+
+```{r relationship}
+
+Correlation = cor(FluTrain$Queries, log(FluTrain$ILI))
+Correlation^2
+```
+
+R^2^ = Correlation^2^
+
+### Performance on the Test Set
+
+The csv file FluTest.csv provides the 2012 weekly data of the ILI-related search queries and the observed weekly percentage of ILI-related physician visits. Load this data into a data frame called FluTest.
+
+```{r Flutestload}
+FluTest = read.csv("FluTest.csv")
+```
+
+Normally, we would obtain test-set predictions from the model FluTrend1 using the code
+
+PredTest1 = predict(FluTrend1, newdata=FluTest)
+
+However, the dependent variable in our model is log(ILI), so PredTest1 would contain predictions of the log(ILI) value. We are instead interested in obtaining predictions of the ILI value. We can convert from predictions of log(ILI) to predictions of ILI via exponentiation, or the exp() function. The new code, which predicts the ILI value, is
+
+
+```{r predtestexp}
+PredTest1 = exp(predict(FluTrend1, newdata=FluTest))
+```
+
+#### What is our estimate for the percentage of ILI-related physician visits for the week of March 11, 2012?
+
+```{r estimatemarch11}
+which(FluTest$Week == "2012-03-11 - 2012-03-17")
+PredTest1[11] 
+```
+
+Estimated ILI = 2.187383
+
+#### What is the relative error betweeen the estimate (our prediction) and the observed value for the week of March 11, 2012?
+
+```{r relativeerror}
+(FluTest$ILI[11]-PredTest1[11])/(FluTest$ILI[11])
+```
+
+$$\frac{Observed ILI - Estimated ILI}{Observed ILI} = \frac{2.293422 - 2.187378}{2.293422} = .04624$$
+
+#### What is the Root Mean Square Error (RMSE) between our estimates and the actual observations for the percentage of ILI-related physician visits, on the test set?
+
+```{r RMSESSE}
+SSE = sum((PredTest1-FluTest$ILI)^2)
+RMSE = sqrt(SSE / nrow(FluTest))
+RMSE
+```
+
+RMSE = 0.7490645
+
+### Training a Time Series Model
+
+The observations in this dataset are consecutive weekly measurements of the dependent and independent variables. This sort of dataset is called a "time series." Often, statistical models can be improved by predicting the current value of the dependent variable using the value of the dependent variable from earlier weeks. In our models, this means we will predict the ILI variable in the current week using values of the ILI variable from previous weeks.
+
+First, we need to decide the amount of time to lag the observations. Because the ILI variable is reported with a 1- or 2-week lag, a decision maker cannot rely on the previous week's ILI value to predict the current week's value. Instead, the decision maker will only have data available from 2 or more weeks ago. We will build a variable called ILILag2 that contains the ILI value from 2 weeks before the current observation.
+
+To do so, we will use the "zoo" package, which provides a number of helpful methods for time series models. While many functions are built into R, you need to add new packages to use some functions. New packages can be installed and loaded easily in R, and we will do this many times in this class. Run the following two commands to install and load the zoo package. In the first command, you will be prompted to select a CRAN mirror to use for your download. Select a mirror near you geographically.
+
+```{r zoopackage}
+install.packages("zoo", repos='http://cran.us.r-project.org')
+
+library(zoo)
+```
+
+After installing and loading the zoo package, run the following commands to create the ILILag2 variable in the training set:
+
+```{r zoopackagefuncs}
+ILILag2 = lag(zoo(FluTrain$ILI), -2, na.pad=TRUE)
+
+FluTrain$ILILag2 = coredata(ILILag2)
+```
+
+In these commands, the value of -2 passed to lag means to return 2 observations before the current one; a positive value would have returned future observations. The parameter na.pad=TRUE means to add missing values for the first two weeks of our dataset, where we can't compute the data from 2 weeks earlier.
+
+#### How many values are missing in the new ILILag2 variable?
+
+```{r missingvalues}
+summary(FluTrain$ILILag2)
+```
+
+NA's = 2
+
+#### Which best describes the relationship between these two variables?
+
+```{r plottimefunction}
+plot(log(FluTrain$ILILag2), log(FluTrain$ILI))
+```
+
+There is a strong positive relationship between log(ILILag2) and log(ILI). 
+
+#### Linear Regression Model
+Train a linear regression model on the FluTrain dataset to predict the log of the ILI variable using the Queries variable as well as the log of the ILILag2 variable. Call this model FluTrend2.
+
+```{r linregtimeseriesmodel}
+FluTrend2 = lm(log(ILI)~Queries+log(ILILag2), data=FluTrain)
+```
+
+##### Which coefficients are significant at the p=0.05 level in this regression model?
+
+```{r coefficientrsummary}
+summary(FluTrend2)
+```
+
+All three coefficients are highly significant.
+
+##### What is the R^2^ value of the FluTrend2 model?
+
+```{r coefficientrsummarys, results = FALSE}
+summary(FluTrend2)
+```
+
+R^2^ = 0.9063
+
+FluTrend2 is a stronger model than FluTrend1 on the training set. Moving from FluTrend1 to FluTrend2, in-sample R^2^ improved from 0.709 to 0.9063, and the new variable is highly significant. As a result, there is no sign of overfitting, and FluTrend2 is superior to FluTrend1 on the training set. 
+
+### Evaluating the Time Series Model in the Test Set 
+So far, we have only added the ILILag2 variable to the FluTrain data frame. To make predictions with our FluTrend2 model, we will also need to add ILILag2 to the FluTest data frame (note that adding variables before splitting into a training and testing set can prevent this duplication of effort).
+
+Modify the code from the previous subproblem to add an ILILag2 variable to the FluTest data frame.
+
+```{r addtestdata }
+ILILag2 = lag(zoo(FluTest$ILI), -2, na.pad=TRUE)
+FluTest$ILILag2 = coredata(ILILag2)
+```
+
+#### How many missing values are there in this new variable?
+```{r howmanynavaluesinnewvar}
+summary(FluTest$ILILag2)
+```
+
+NA's = 2
+
+#### Training Set vs Test Set
+In this problem, the training and testing sets are split sequentially -- the training set contains all observations from 2004-2011 and the testing set contains all observations from 2012. There is no time gap between the two datasets, meaning the first observation in FluTest was recorded one week after the last observation in FluTrain. From this, we can identify how to fill in the missing values for the ILILag2 variable in FluTest.
+
+##### Which value should be used to fill in the ILILag2 variable for the first observation in FluTest?
+The ILI value of the second-to-last observation in the FluTrain data frame. The time two weeks before the first week of 2012 is the second-to-last week of 2011.
+
+##### Which value should be used to fill in the ILILag2 variable for the second observation in FluTest?
+The ILI value of the last observation in the FluTrain data frame.
+The time two weeks before the second week of 2012 is the last week of 2011.
+
+#### Fill in the missing values in FluTest
+Fill in the missing values for ILILag2 in FluTest. In terms of syntax, you could set the value of ILILag2 in row "x" of the FluTest data frame to the value of ILI in row "y" of the FluTrain data frame with "FluTest\$ILILag2[x] = FluTrain$ILI[y]". Use the answer to the previous questions to determine the appropriate values of "x" and "y". It may be helpful to check the total number of rows in FluTrain using str(FluTrain) or nrow(FluTrain).
+
+```{r fillinmissingvalues}
+nrow(FluTrain)
+FluTest$ILILag2[1] = FluTrain$ILI[416]
+FluTest$ILILag2[2] = FluTrain$ILI[417]
+```
+
+##### What is the new value of the ILILag2 variable in the first row of FluTest?
+```{r newvaluefirstrow}
+FluTest$ILILag2[1]
+```
+
+FluTest$ILILag2[1] = 1.852736
+
+##### What is the new value of the ILILag2 variable in the second row of FluTest?
+```{r newvaluefsecondrow}
+FluTest$ILILag2[2]
+```
+
+FluTest$ILILag2[2] = 2.12413
+
+#### Linear Regression 
+Obtain test set predictions of the ILI variable from the FluTrend2 model, again remembering to call the exp() function on the result of the predict() function to obtain predictions for ILI instead of log(ILI).
+
+```{r linearregmodel2}
+PredTest2 = exp(predict(FluTrend2, newdata=FluTest))
+```
+
+##### What is the test-set RMSE of the FluTrend2 model?
+```{r rmseflutrend2}
+SSE = sum((PredTest2-FluTest$ILI)^2)
+RMSE = sqrt(SSE / nrow(FluTest))
+RMSE
+```
+
+RMSE = 0.294
+
+##### Which model obtained the best test-set RMSE?
+The test-set RMSE of FluTrend2 is 0.294, as opposed to the 0.749 value obtained by the FluTrend1 model.
+
+

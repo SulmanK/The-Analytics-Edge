@@ -1,0 +1,219 @@
+---
+title: 'Analytics Edge: Unit 2 - Moneyball'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Moneyball
+
+### The Story
+
+* **Moneyball** tells the story of the Oakland A's in 2002
+    + One of the poorest teams in baseball
+    + But they were improving every year
+
+<center>
+
+![](money.png)
+
+
+
+### The Problem
+
+* Rich teams can afford the all-star players
+
+* How do the poor teams compete?
+
+<center>
+
+![](poor.png)
+
+### A Different Approach
+
+* The A's started using a different method to select players
+
+* The traditional way was through scouting
+    + Scouts would go watch high school and college players
+    + Report back about their skills
+    + A lot of talk about speed and athletic build
+
+* The A's selected players based on their statistics, not on their looks
+
+
+    
+### The Goal of a Basketball Team
+
+<center>
+
+![](goal.png)
+
+
+### Making it to the Playoffs
+
+<center>
+
+![](playoff.png)
+
+</center>
+* The A's calculated that they needed to score 155 more runs than they allowed during the regular season to expect to win 95 games
+
+* Now, let's verify this statement with Linear Regression
+
+<center>
+
+![](135.png)
+
+### Scoring Runs
+
+* How does a team score more runs?
+
+* The A's discovered that two baseball statistics were significantly more important than anything else
+
+    + On-Base Percentage (OBP)
+        - Percentage of time a player gets on base (including walks)
+    + Slugging Percentage (SLG)
+        - How far a player gets around bases on his turn (measures power)
+
+* Most teams focused on Batting Average (BA)
+
+* The A's claimed that
+    + OBP was the most important
+    + SLG was important
+    + BA was overvalued
+
+### Runs Allowed
+
+* Use pitching statistics to predict runs allowed
+    + Opponents On-Base Percentage (OOBP)
+    + Opponents Slugging Percentage (OSLG)
+    
+* We get the following linear regression model
+
+$$RunsAllowed = -837.38 + 2913.60(OOBP) + 1514.29(OSLG)$$
+
+### Predicting Runs and Wins
+
+* Can we predict how many games the 2002 Oakland A's will win using our models
+
+* The models for runs use team statistics
+
+* We need to estimate the new team statistics using past player performances
+    + Assumes past performances correlates with future performance
+    + Assume few injuries
+
+* We can estimate the team statistics for 2002 by using the 2001 player statistics
+
+### Predicting Runs Scored
+
+* Using the 2001 regular season statistics for these players
+    + Team OBP is 0.339
+    + Team SLG is 0.430
+
+* Our regression equation was
+
+$$RunsScored = -804.63 + 2737.77(OBP) + 1584.91(SLG)$$
+
+
+* Our 2002 prediction for the A's is
+
+
+$$RunsScored = -804.63 + 2737.77(0.339) + 1584.91(0.430) = 805$$
+
+### Predicting Runs Allowed
+
+
+* Using the 2001 regular season statistics for these players
+    + Team OOBP is 0.307
+    + Team OSLG is 0.373
+
+* Our regression equation was
+
+$$RunsAllowed = -837.38 + 2913.60(OOBP) + 1514.29(OSLG)$$
+
+
+* Our 2002 prediction for the A's is
+
+
+$$RunsAllowed = -837.38 + 2913.60(0.307) + 1514.29 (0.373) = 622$$
+
+### Predicting Wins
+
+* Regression equation to predict wins
+
+$$Wins = 80.8814 + 0.1058(RS - RA)$$
+
+$$Wins = 80.8814 + 0.1058(805 - 622) = 100$$
+
+### Results
+
+<center>
+
+![](moneyball.png)
+
+### The Analytics Edge
+
+* Models allow managers to more accurately value players and minimize risk
+
+* Relatively simple models can be useful
+
+
+## Moneyball in R
+
+### Linear Regression
+
+
+
+#### Read in data
+```{r loadinb}
+baseball = read.csv("baseball.csv")
+str(baseball)
+```
+
+#### Subset to only include moneyball years
+```{r subsetmoney}
+moneyball = subset(baseball, Year < 2002)
+str(moneyball)
+```
+
+#### Compute Run Difference
+```{r computerundiff}
+moneyball$RD = moneyball$RS - moneyball$RA
+str(moneyball)
+```
+
+#### Scatterplot to check for linear relationship
+```{r scatterplotlin}
+plot(moneyball$RD, moneyball$W)
+```
+
+#### Regression model to predict wins
+```{r regressionmodpred}
+WinsReg = lm(W ~ RD, data=moneyball)
+summary(WinsReg)
+```
+
+#### Regression model to predict runs scored
+```{r regressionmodelscore}
+RunsReg = lm(RS ~ OBP + SLG + BA, data=moneyball)
+summary(RunsReg)
+
+```

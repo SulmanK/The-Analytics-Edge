@@ -1,0 +1,265 @@
+---
+title: 'Analytics Edge: Unit 2 - Linear Regression'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## The Statisical Sommelier
+
+### Bordeaux Wine
+
+* Large differences in price and quality between years, although wine is produced in a similar way 
+
+* Meant to be aged, so hard to tell if  wine will be good  when it is on the market 
+
+* Can analytics be used to come up with a different system for judging wine? 
+
+### Building a Model
+
+* March 1990 - Orley Ashenfelter, a Princeton economics professor, claims he can predict wine quality without tasting the wine 
+
+* Ashenfelter used a method called 
+**linear regression** 
+    + Predicts an outcome variable, or dependent variable 
+    + Predicts using a set of independent variables 
+
+* Dependent variable: typical price in 1990-1991 wine auctions (approximates quality)  
+
+* Independent variables: 
+    + Age - older wines are more expensive 
+    + Weather 
+        - Average Growing Season Temperature 
+        - Harvest Rain 
+        - Winter Rain 
+
+### The Data (1952 - 1978)
+
+![](plotsdata.png)
+
+    
+### One - Variable Linear Regression
+
+![](onevariable.png)
+
+ $$y = 7.07$$
+ $$y = 0.5(AGST) - 1.25$$
+
+### The Regression Model
+
+* One-variable regression model
+ $$y^i = \beta_0 +\beta_1 x^i + \eta^i $$ 
+
+y^i^ = dependent variable (wine price) for the i^th^ observation
+
+x^i^ = indepedent variable (temperature) for the i^th^ observation
+
+Eta^i^ = error term for the i^th^ observation
+
+Beta_0 = intercept coefficient
+
+Beta_1 = regression coefficient for the independent variable
+
+### Selecting the Best Model
+
+![](selectingbest.png)
+
+### R^2^
+
+* Compares the best model to a "baseline" model
+* The baseline model does not use any variables
+    + Predicts same outcome (price) regardless of the independent variable (temperature)
+    
+![](r2.png)
+
+### Intepreting R^2^
+
+$$ R^2 = 1 - \frac{SSE}{SST} $$
+* R^2^ captures value added from using a model
+    + R^2^ = 0 means no improvement over baseline
+    + R^2^ = 1 means a perfect predictive model
+
+### Multivariable Linear Regression
+$$y^i = \beta_0 +\beta_1 x^i_1 + \beta_2 x^i_2 +... + \beta_k x^i_k + \eta^i $$
+
+
+y^i^ = dependent variable (wine price) for the i^th^ observation
+
+x^i^_j = j^th^ indepedent variable (wine price) for the i^th^ observation
+
+Eta^i^ = error term for the i^th^ observation
+
+Beta_0 = intercept coefficient
+
+Beta_j = regression coefficient for the j^th^ independent variable
+
+* Best model coefficients selected to minimize SSE
+
+### Adding Variables
+
+![](addingvariables.png)
+
+* Adding more variables can improve the model
+* Diminishing returns as more variables are added
+
+### Selecting Variables
+
+* Not all available variables should be used
+    + Each new variable requires more data
+    + Causes **overfitting** high R^2^ on data used to create model, but bad performance on unseen data
+    
+### Understanding the Model and Coefficients 
+
+![](understand.png)
+
+### Correlation
+
+A measure of the linear relationship between variables
+
++1 = perfect positive linear relationship
+0 = no linear relationship
+-1 = perfect negative linear relationship
+
+### Examples of Correlation
+
+![](cor1.png)
+
+![](cor2.png)
+
+![](cor3.png)
+
+### Predictive Ability
+* Our wine model has a value of R^2^ = 0.83
+
+* Tells us our accuracy on the data that we used to build the modle
+
+* But how well does the model perform on new data?
+    + Bordeaux wine buyers profit from being able to predict 
+the quality of  a wine years before it matures 
+
+### Out-of-Sample R^2^
+
+![](oos.png)
+
+* Better model R^2^ does not mean better test set R^2^
+* Need more data to to be conclusive
+* Out-of-sample R^2^ can be negative!
+
+
+### The Analytics Edge
+
+* A linear regression model with only a few variables can predict wine prices fairly well
+
+* In many cases, outperforms wine experts' opinions
+
+* A quantitative approach to a qualitative problem
+
+
+## Linear Regression in R
+
+
+
+### Read in data
+```{r ReadinData}
+wine = read.csv("wine.csv")
+str(wine)
+summary(wine)
+```
+### Linear Regression
+
+#### Linear Regression (one variable)
+```{r linreg}
+model1 = lm(Price ~ AGST, data=wine)
+summary(model1)
+```
+
+#### Sum of Squared Errors
+```{r sse}
+model1$residuals
+SSE = sum(model1$residuals^2)
+SSE
+```
+
+#### Linear Regression (two variables)
+```{r linreg2}
+model2 = lm(Price ~ AGST + HarvestRain, data=wine)
+summary(model2)
+```
+
+#### Sum of Squared Errors
+```{r sse2}
+SSE = sum(model2$residuals^2)
+SSE
+```
+
+#### Linear Regression (all variables)
+```{r linregall}
+model3 = lm(Price ~ AGST + HarvestRain + WinterRain + Age + FrancePop, data=wine)
+summary(model3)
+```
+
+#### Sum of Squared Errors
+```{r sseall}
+SSE = sum(model3$residuals^2)
+SSE
+```
+
+
+#### Remove FrancePop
+```{r mod4}
+model4 = lm(Price ~ AGST + HarvestRain + WinterRain + Age, data=wine)
+summary(model4)
+```
+
+
+#### Correlations
+```{r corr}
+cor(wine$WinterRain, wine$Price)
+cor(wine$Age, wine$FrancePop)
+cor(wine)
+```
+
+#### Remove Age and FrancePop
+```{r mod5}
+model5 = lm(Price ~ AGST + HarvestRain + WinterRain, data=wine)
+summary(model5)
+```
+
+
+#### Read in test set
+```{r testset}
+wineTest = read.csv("wine_test.csv")
+str(wineTest)
+```
+
+#### Make test set predictions
+```{r testsetpred}
+predictTest = predict(model4, newdata=wineTest)
+predictTest
+```
+
+#### Compute R-squared
+```{r computer2}
+SSE = sum((wineTest$Price - predictTest)^2)
+SST = sum((wineTest$Price - mean(wine$Price))^2)
+1 - SSE/SST
+```
+

@@ -1,0 +1,127 @@
+---
+title: 'Analytics Edge: Unit 2 - NBA'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 160, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+
+## NBA in R
+
+### Linear Regression
+
+#### Read in the data
+```{r nbaread}
+NBA = read.csv("NBA_train.csv")
+str(NBA)
+```
+
+#### How many wins to make the playoffs?
+```{r howmanywins}
+table(NBA$W, NBA$Playoffs)
+```
+
+#### Compute Points Difference
+```{r computerpointdiff}
+NBA$PTSdiff = NBA$PTS - NBA$oppPTS
+```
+
+#### Check for linear relationship
+```{r checlinrelationship}
+plot(NBA$PTSdiff, NBA$W)
+```
+
+#### Linear regression model for wins
+```{r linearregmodelwins}
+WinsReg = lm(W ~ PTSdiff, data=NBA)
+summary(WinsReg)
+```
+
+#### Linear regression model for points scored
+```{r linearregpointsscored}
+PointsReg = lm(PTS ~ X2PA + X3PA + FTA + AST + ORB + DRB + TOV + STL + BLK, data=NBA)
+summary(PointsReg)
+```
+
+#### Sum of Squared Errors
+```{r SSE}
+PointsReg$residuals
+SSE = sum(PointsReg$residuals^2)
+SSE
+```
+
+#### Root mean squared error
+```{r RMSE}
+RMSE = sqrt(SSE/nrow(NBA))
+RMSE
+```
+
+#### Average number of points in a season
+```{r averagenumberofpoints}
+mean(NBA$PTS)
+```
+
+#### Remove insignifcant variables
+```{r removeinsig}
+summary(PointsReg)
+
+PointsReg2 = lm(PTS ~ X2PA + X3PA + FTA + AST + ORB + DRB + STL + BLK, data=NBA)
+summary(PointsReg2)
+
+PointsReg3 = lm(PTS ~ X2PA + X3PA + FTA + AST + ORB + STL + BLK, data=NBA)
+summary(PointsReg3)
+
+PointsReg4 = lm(PTS ~ X2PA + X3PA + FTA + AST + ORB + STL, data=NBA)
+summary(PointsReg4)
+```
+
+#### Compute SSE and RMSE for new model
+```{r computessermse}
+SSE_4 = sum(PointsReg4$residuals^2)
+RMSE_4 = sqrt(SSE_4/nrow(NBA))
+SSE_4
+RMSE_4
+```
+
+
+#### Read in test set
+```{r readtestset}
+NBA_test = read.csv("NBA_test.csv")
+```
+
+#### Make predictions on test set
+```{r makepredtest}
+PointsPredictions = predict(PointsReg4, newdata=NBA_test)
+```
+
+#### Compute out-of-sample R^2
+```{r oosrsquared}
+SSE = sum((PointsPredictions - NBA_test$PTS)^2)
+SST = sum((mean(NBA$PTS) - NBA_test$PTS)^2)
+R2 = 1 - SSE/SST
+R2
+```
+
+#### Compute the RMSE
+```{r computermsetest}
+RMSE = sqrt(SSE/nrow(NBA_test))
+RMSE
+```
