@@ -21,7 +21,9 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 5 : Detecting Vandalism on Wikipedia](http://rpubs.com/SulmanKhan/433730)
     * [Unit 5 : Automating Reviews in Medicine](http://rpubs.com/SulmanKhan/433749)
     * [Unit 5 : Separating Spam from Ham (Part 1)](http://rpubs.com/SulmanKhan/433781)
-    
+* [Unit 6 : An Introduction to Clustering](http://rpubs.com/SulmanKhan/435602)
+
+
 
   
 -Sulman Khan
