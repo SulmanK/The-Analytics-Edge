@@ -24,6 +24,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
 * [Unit 6 : An Introduction to Clustering](http://rpubs.com/SulmanKhan/435602)
     * [Unit 6 : Clustering to Better Predict Heart Attacks](http://rpubs.com/SulmanKhan/435656)
     * [Unit 6 : Segmenting Images to Create Data](http://rpubs.com/SulmanKhan/435665)
+    * [Unit 6 : Document Clustering with Daily Kos](http://rpubs.com/SulmanKhan/435944)
     
 
 
