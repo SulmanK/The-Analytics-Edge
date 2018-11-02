@@ -26,6 +26,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 6 : Segmenting Images to Create Data](http://rpubs.com/SulmanKhan/435665)
     * [Unit 6 : Document Clustering with Daily Kos](http://rpubs.com/SulmanKhan/435944)
     * [Unit 6 : Market Segmentation for Airlines](http://rpubs.com/SulmanKhan/435961)
+    * [Unit 6 : Predicting Stock Returns with Cluster-Then-Predict](http://rpubs.com/SulmanKhan/435978)
 
 
 
