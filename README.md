@@ -25,7 +25,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 6 : Clustering to Better Predict Heart Attacks](http://rpubs.com/SulmanKhan/435656)
     * [Unit 6 : Segmenting Images to Create Data](http://rpubs.com/SulmanKhan/435665)
     * [Unit 6 : Document Clustering with Daily Kos](http://rpubs.com/SulmanKhan/435944)
-    
+    * [Unit 6 : Market Segmentation for Airlines](http://rpubs.com/SulmanKhan/435961)
 
 
 
