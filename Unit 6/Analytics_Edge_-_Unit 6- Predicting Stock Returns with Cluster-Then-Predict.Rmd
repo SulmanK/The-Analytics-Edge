@@ -1,0 +1,363 @@
+---
+title: 'Analytics Edge: Unit 6 - Predicting Stock Returns with Cluster-Then-Predict '
+author: "Sulman Khan"
+date: "October 27, 2018"
+output: 
+  html_document:
+    css: C:/Users/FC-Work2/Desktop/analytics edge/Unit 1/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'center', dpi = 100, fig.path = 'figures/NBA/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Background Information on the Dataset
+
+In the second lecture sequence this week, we heard about cluster-then-predict, a methodology in which you first cluster observations and then build cluster-specific prediction models. In the lecture sequence, we saw how this methodology helped improve the prediction of heart attack risk. In this assignment, we'll use cluster-then-predict to predict future stock prices using historical stock data.
+
+When selecting which stocks to invest in, investors seek to obtain good future returns. In this problem, we will first use clustering to identify clusters of stocks that have similar returns over time. Then, we'll use logistic regression to predict whether or not the stocks will have positive future returns.
+
+For this problem, we'll use StocksCluster.csv, which contains monthly stock returns from the NASDAQ stock exchange. The NASDAQ is the second-largest stock exchange in the world, and it lists many technology companies. The stock price data used in this problem was obtained from infochimps, a website providing access to many datasets.
+
+Each observation in the dataset is the monthly returns of a particular company in a particular year. The years included are 2000-2009. The companies are limited to tickers that were listed on the exchange for the entire period 2000-2009, and whose stock price never fell below $1. So, for example, one observation is for Yahoo in 2000, and another observation is for Yahoo in 2001. Our goal will be to predict whether or not the stock return in December will be positive, using the stock returns for the first 11 months of the year.
+
+This dataset contains the following variables:
+
+* **ReturnJan** = the return for the company's stock during January (in the year of the observation). 
+
+* **ReturnFeb** = the return for the company's stock during February (in the year of the observation). 
+
+* **ReturnMar** = the return for the company's stock during March (in the year of the observation). 
+
+* **ReturnApr** = the return for the company's stock during April (in the year of the observation). 
+
+* **ReturnMay** = the return for the company's stock during May (in the year of the observation). 
+
+* **ReturnJune** = the return for the company's stock during June (in the year of the observation). 
+
+* **ReturnJuly** = the return for the company's stock during July (in the year of the observation). 
+
+* **ReturnAug** = the return for the company's stock during August (in the year of the observation). 
+
+* **ReturnSep** = the return for the company's stock during September (in the year of the observation).
+
+* **ReturnOct** = the return for the company's stock during October (in the year of the observation). 
+
+* **ReturnNov** = the return for the company's stock during November (in the year of the observation).
+
+* **PositiveDec** = whether or not the company's stock had a positive return in December (in the year of the observation). This variable takes value 1 if the return was positive, and value 0 if the return was not positive.
+
+For the first 11 variables, the value stored is a proportional change in stock value during that month. For instance, a value of 0.05 means the stock increased in value 5% during the month, while a value of -0.02 means the stock decreased in value 2% during the month.
+
+## R Exercises
+
+### Exploring the Dataset
+
+Load StocksCluster.csv into a data frame called "stocks".
+
+```{r loaddata}
+# Read the dataset
+stocks = read.csv("StocksCluster.csv")
+```
+
+#### How many observations are in the dataset?
+```{r howmanyobs}
+# Reports the number of rows on stocks
+nrow(stocks)
+```
+
+There are 11580 observations in this dataset.
+
+#### What proportion of the observations have positive returns in December?
+```{r posDec}
+# Tabulate the positive december returns
+z = table(stocks$PositiveDec)
+kable(z)
+z[2]/(sum(z))
+```
+0.546 of the observations have positive returns in December.
+
+#### What is the maximum correlation between any two return variables in the dataset? You should look at the pairwise correlations between ReturnJan, ReturnFeb, ReturnMar, ReturnApr, ReturnMay, ReturnJune, ReturnJuly, ReturnAug, ReturnSep, ReturnOct, and ReturnNov.
+
+```{r corr}
+# Obtain a correlation matrix of the data
+z = cor(stocks)
+kable(z)
+```
+
+#### Summary
+```{r exploringdatajan}
+# Obtain a summary of the data
+z = summary(stocks)
+kable(z)
+```
+
+##### Which month (from January through November) has the largest mean return across all observations in the dataset?
+April has the largest mean value (0.026308).
+
+##### Which month (from January through November) has the smallest mean return across all observations in the dataset?
+September has the smallest mean value (-0.014721).
+
+### Initial Logistic Regression Model
+
+Run the following commands to split the data into a training set and testing set, putting 70% of the data in the training set and 30% of the data in the testing set:
+
+```{r logregmodel}
+library(caTools)
+
+set.seed(144)
+# Split the dataset -> Training and Testing 
+spl = sample.split(stocks$PositiveDec, SplitRatio = 0.7)
+
+stocksTrain = subset(stocks, spl == TRUE)
+
+stocksTest = subset(stocks, spl == FALSE)
+```
+
+Then, use the stocksTrain data frame to train a logistic regression model (name it StocksModel) to predict PositiveDec using all the other variables as independent variables. Don't forget to add the argument family=binomial to your glm command.
+
+
+#### What is the overall accuracy on the training set, using a threshold of 0.5?
+```{r logmodel}
+# Create Logistic Regression Model
+StocksModel= glm(PositiveDec ~ ., data = stocksTrain, family=binomial)
+# Predict on the training set
+predictTrain = predict(StocksModel, type="response")
+# Tabulate the predictions of training set vs our predict function
+z = table(stocksTrain$PositiveDec, predictTrain > 0.5)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+The overall accuracy of the model is 0.571.
+
+#### Now obtain test set predictions from StocksModel. What is the overall accuracy of the model on the test, again using a threshold of 0.5?
+
+```{r logmodeltest}
+# Predict on the test set
+predictTest = predict(StocksModel, type="response", newdata=stocksTest)
+# Tabulate the predictions of test set vs our predict function
+z = table(stocksTest$PositiveDec, predictTest > 0.5)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+#### What is the accuracy on the test set of a baseline model that always predicts the most common outcome (PositiveDec = 1)?
+
+```{r baselinemodelaccuracy}
+# Tabulate the test set positive december returns
+z = table(stocksTest$PositiveDec)
+kable(z)
+# Compute the accuracy of the baseline model
+z[2]/(sum(z))
+```
+
+The baseline model has an accuracy of 0.5460.
+
+### Clustering Stocks
+Now, let's cluster the stocks. The first step in this process is to remove the dependent variable using the following commands:
+
+```{r removedepdent variable}
+#Remove Dependent Variable
+limitedTrain = stocksTrain
+limitedTrain$PositiveDec = NULL
+limitedTest = stocksTest
+limitedTest$PositiveDec = NULL
+```
+
+#### Why do we need to remove the dependent variable in the clustering phase of the cluster-then-predict methodology?
+In cluster-then-predict, our final goal is to predict the dependent variable, which is unknown to us at the time of prediction. Therefore, if we need to know the outcome value to perform the clustering, the methodology is no longer useful for prediction of an unknown outcome value.
+
+This is an important point that is sometimes mistakenly overlooked. If you use the outcome value to cluster, you might conclude your method strongly outperforms a non-clustering alternative. However, this is because it is using the outcome to determine the clusters, which is not valid.
+
+#### Preprocess the data
+n the market segmentation assignment in this week's homework, you were introduced to the preProcess command from the caret package, which normalizes variables by subtracting by the mean and dividing by the standard deviation.
+
+In cases where we have a training and testing set, we'll want to normalize by the mean and standard deviation of the variables in the training set. We can do this by passing just the training set to the preProcess function:
+
+```{r preprocessthedata}
+#Preprocess the data
+library(caret)
+preproc = preProcess(limitedTrain)
+normTrain = predict(preproc, limitedTrain)
+normTest = predict(preproc, limitedTest)
+```
+
+##### What is the mean of the ReturnJan variable in normTrain?
+```{r meanvariablereturnjan}
+#Obtains the mean of the ReturnJan variable in normTrain
+mean(normTrain$ReturnJan)
+```
+
+The mean is 2.100586 x 10^-17^.
+
+##### What is the mean of the ReturnJan variable in normTrain?
+```{r meanvariablenormtest}
+#Obtains the mean of the ReturnJan variable in normTest
+mean(normTest$ReturnJan)
+```
+
+The mean is -0.0004185886.
+
+##### Why is the mean ReturnJan variable much closer to 0 in normTrain than in normTest?
+From mean(stocksTrain\$ReturnJan) and mean(stocksTest$ReturnJan), we see that the average return in January is slightly higher in the training set than in the testing set. Since normTest was constructed by subtracting by the mean ReturnJan value from the training set, this explains why the mean value of ReturnJan is slightly negative in normTest.
+
+#### K-means cluster
+```{r seedcluster}
+# implemenmt the k-mean cluster
+set.seed(144)
+kmc = kmeans(normTrain, centers=3)
+# Subset the clusters into three different clusters
+KmeansCluster1 = subset(normTrain, kmc$cluster == 1)
+KmeansCluster2 = subset(normTrain, kmc$cluster == 2)
+KmeansCluster3 = subset(normTrain, kmc$cluster == 3)
+```
+
+##### Which cluster has the largest number of observations?
+```{r numberofobservationskmc}
+# Number of observations
+z = table(kmc$cluster)
+kable(z)
+# Cluster with the largest number of observations
+which.max(z)
+```
+
+Cluster 2 has the largest number of observations.
+
+##### Flexclust
+Recall from the recitation that we can use the flexclust package to obtain training set and testing set cluster assignments for our observations (note that the call to as.kcca may take a while to complete):
+
+```{r flexclust}
+# Flexclust package
+library(flexclust)
+kmc.kcca = as.kcca(kmc, normTrain)
+# Predict the Training set
+clusterTrain = predict(kmc.kcca)
+# Predict the Test set
+clusterTest = predict(kmc.kcca, newdata=normTest)
+```
+
+###### How many test-set observations were assigned to Cluster 2?
+```{r numberofobscluster2}
+# Number of observations 
+z = table(clusterTest)
+kable(z)
+# Number of observations in cluster 2
+z[2]
+```
+
+Cluster 2 has 2080 observations.
+
+### Cluster-Specific Predictions
+
+Using the subset function, build data frames stocksTrain1, stocksTrain2, and stocksTrain3, containing the elements in the stocksTrain data frame assigned to clusters 1, 2, and 3, respectively (be careful to take subsets of stocksTrain, not of normTrain). Similarly build stocksTest1, stocksTest2, and stocksTest3 from the stocksTest data frame.
+
+#### Which training set data frame has the highest average value of the dependent variable?
+
+```{r clusterspecificpred}
+# Subsetting stocksTrain into 1, 2, and 3 from the respective clusters
+stocksTrain1 = subset(stocksTrain, clusterTrain == 1)
+stocksTrain2 = subset(stocksTrain, clusterTrain == 2)
+stocksTrain3 = subset(stocksTrain, clusterTrain == 3)
+# Subsetting stocksTest into 1, 2, and 3 from the respective clusters
+stocksTest1 = subset(stocksTest, clusterTest == 1)
+stocksTest2 = subset(stocksTest, clusterTest == 2)
+stocksTest3 = subset(stocksTest, clusterTest == 3)
+# Compute the average value of the Positive December returns in each respective cluster
+mean(stocksTrain1$PositiveDec)
+mean(stocksTrain2$PositiveDec)
+mean(stocksTrain3$PositiveDec)
+```
+
+We see that stocksTrain1 has the observations with the highest average value of the dependent variable.
+
+#### Logistic regression models
+Build logistic regression models StocksModel1, StocksModel2, and StocksModel3, which predict PositiveDec using all the other variables as independent variables. StocksModel1 should be trained on stocksTrain1, StocksModel2 should be trained on stocksTrain2, and StocksModel3 should be trained on stocksTrain3.
+
+Which variables have a positive sign for the coefficient in at least one of StocksModel1, StocksModel2, and StocksModel3 and a negative sign for the coefficient in at least one of StocksModel1, StocksModel2, and StocksModel3? Select all that apply.
+```{r logmodelclusters}
+# Create Logistic Regression Model
+StocksModel1= glm(PositiveDec ~ ., data = stocksTrain1, family=binomial)
+StocksModel2= glm(PositiveDec ~ ., data = stocksTrain2, family=binomial)
+StocksModel3= glm(PositiveDec ~ ., data = stocksTrain3, family=binomial)
+```
+
+
+##### Which variables have a positive sign for the coefficient in at least one of StocksModel1, StocksModel2, and StocksModel3 and a negative sign for the coefficient in at least one of StocksModel1, StocksModel2, and StocksModel3? Select all that apply.
+```{r summaryoflogmodels}
+### Examine the logistic regression models
+summary(StocksModel1)
+summary(StocksModel2)
+summary(StocksModel3)
+```
+
+ReturnJan, ReturnFeb, ReturnMar, ReturnJune, ReturnAug, and ReturnOct differ in sign between the models.
+
+##### What is the overall accuracy of StocksModel1 on the test set stocksTest1, using a threshold of 0.5?
+
+```{r computeaccuracy across all three}
+# Predict on the test set
+predictTest1 = predict(StocksModel1, type="response", newdata=stocksTest1)
+# Tabulate the predictions of test set vs our predict function
+z = table(stocksTest1$PositiveDec, predictTest1 > 0.5)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+The overall accuracy of StocksModel1 is 0.5504808.
+
+##### What is the overall accuracy of StocksModel2 on the test set stocksTest2, using a threshold of 0.5?
+
+```{r computeaccuracy across all three2}
+# Predict on the test set
+predictTest2 = predict(StocksModel2, type="response", newdata=stocksTest2)
+# Tabulate the predictions of test set vs our predict function
+z = table(stocksTest2$PositiveDec, predictTest2 > 0.5)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+The overall accuracy of StocksModel2 is 0.5504808.
+
+##### What is the overall accuracy of StocksModel1 on the test set stocksTest1, using a threshold of 0.5?
+
+```{r computeaccuracy across all three3}
+# Predict on the test set
+predictTest3 = predict(StocksModel3, type="response", newdata=stocksTest3)
+# Tabulate the predictions of test set vs our predict function
+z = table(stocksTest3$PositiveDec, predictTest3 > 0.5)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+The overall accuracy of StocksModel3 is 0.6458333.
+
+##### To compute the overall test-set accuracy of the cluster-then-predict approach, we can combine all the test-set predictions into a single vector and all the true outcomes into a single vector:
+```{r computeoveralltestsetaccuracy}
+# Combine all test-set predictions and outcomes into a single vector
+AllPredictions = c(predictTest1, predictTest2, predictTest3)
+AllOutcomes = c(stocksTest1$PositiveDec, stocksTest2$PositiveDec, stocksTest3$PositiveDec)
+z = table(AllOutcomes, AllPredictions > 0.5)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+After combining the predictions and outcomes with the provided code, we can compute the overall test-set accuracy by creating a classification matrix: The overall accuracy is 0.5788. We see a modest improvement over the original logistic regression model. Since predicting stock returns is a notoriously hard problem, this is a good increase in accuracy. By investing in stocks for which we are more confident that they will have positive returns (by selecting the ones with higher predicted probabilities), this cluster-then-predict model can give us an edge over the original logistic regression model.

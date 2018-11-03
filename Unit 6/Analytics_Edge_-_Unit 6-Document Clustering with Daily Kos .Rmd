@@ -1,0 +1,311 @@
+---
+title: 'Analytics Edge: Unit 6 - Document Clustering with Daily Kos '
+author: "Sulman Khan"
+date: "October 27, 2018"
+output: 
+  html_document:
+    css: C:/Users/FC-Work2/Desktop/analytics edge/Unit 1/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'center', dpi = 100, fig.path = 'figures/NBA/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Background Information on the Dataset
+
+Document clustering, or text clustering, is a very popular application of clustering algorithms. A web search engine, like Google, often returns thousands of results for a simple query. For example, if you type the search term "jaguar" into Google, around 200 million results are returned. This makes it very difficult to browse or find relevant information, especially if the search term has multiple meanings. If we search for "jaguar", we might be looking for information about the animal, the car, or the Jacksonville Jaguars football team. 
+
+Clustering methods can be used to automatically group search results into categories, making it easier to find relevant results. This method is used in the search engines PolyMeta and Helioid, as well as on FirstGov.gov, the official Web portal for the U.S. government. The two most common algorithms used for document clustering are Hierarchical and k-means. 
+
+In this problem, we'll be clustering articles published on Daily Kos, an American political blog that publishes news and opinion articles written from a progressive point of view. Daily Kos was founded by Markos Moulitsas in 2002, and as of September 2014, the site had an average weekday traffic of hundreds of thousands of visits. 
+
+The file dailykos.csv contains data on 3,430 news articles or blogs that have been posted on Daily Kos. These articles were posted in 2004, leading up to the United States Presidential Election. The leading candidates were incumbent President George W. Bush (republican) and John Kerry (democratic). Foreign policy was a dominant topic of the election, specifically, the 2003 invasion of Iraq. 
+
+Each of the variables in the dataset is a word that has appeared in at least 50 different articles (1,545 words in total). The set of  words has been trimmed according to some of the techniques covered in the previous week on text analytics (punctuation has been removed, and stop words have been removed). For each document, the variable values are the number of times that word appeared in the document. 
+
+## R Exercises
+
+### Hierarchical Clustering
+Let's start by building a hierarchical clustering model. First, read the data set into R. Then, compute the distances (using method="euclidean"), and use hclust to build the model (using method="ward.D"). You should cluster on all of the variables.
+
+
+```{r hierarchicalcluster}
+# Load in the dataset
+dailykos = read.csv("dailykos.csv")
+# Hierarchical cluster algorithm
+kosDist = dist(dailykos, method="euclidean")
+kosHierClust = hclust(kosDist, method="ward.D")
+```
+
+#### Running the dist function will probably take you a while. Why?
+
+We have a lot of observations, so it takes a long time to compute the distance between each pair of observations. We have a lot of variables, so the distance computation is long. 
+
+#### Plot the dendrogram of your hierarchical clustering model. Just looking at the dendrogram, which of the following seem like good choices for the number of clusters?
+
+```{r plotdendrogram}
+# Plots the dendrogram
+plot(kosHierClust)
+```
+
+The choices 2 and 3 are good cluster choices according to the dendrogram, because there is a lot of space between the horizontal lines in the dendrogram in those cut off spots (draw a horizontal line across the dendrogram where it crosses 2 or 3 vertical lines).
+
+#### In this problem, we are trying to cluster news articles or blog posts into groups. This can be used to show readers categories to choose from when trying to decide what to read. Just thinking about this application, what are good choices for the number of clusters?
+
+Thinking about the application, it is probably better to show the reader more categories than 2 or 3. These categories would probably be too broad to be useful. Seven or eight categories seems more reasonable.
+
+#### Choosing 7 clusters
+
+Let's pick 7 clusters. This number is reasonable according to the dendrogram, and also seems reasonable for the application. Use the cutree function to split your data into 7 clusters.
+
+Now, we don't really want to run tapply on every single variable when we have over 1,000 different variables. Let's instead use the subset function to subset our data by cluster. Create 7 new datasets, each containing the observations from one of the clusters.
+
+##### How many observations are in cluster 3?
+```{r plotdendogramcutree}
+# Plots the dendrogram
+plot(kosHierClust)
+# Divides it into 7 clusters
+rect.hclust(kosHierClust, k = 7, border = "red")
+hierGroups = cutree(kosHierClust, k = 7)
+# Divides dataset into 7 different subsets
+HierCluster1 = subset(dailykos, hierGroups == 1)
+
+HierCluster2 = subset(dailykos, hierGroups == 2)
+
+HierCluster3 = subset(dailykos, hierGroups == 3)
+
+HierCluster4 = subset(dailykos, hierGroups == 4)
+
+HierCluster5 = subset(dailykos, hierGroups == 5)
+
+HierCluster6 = subset(dailykos, hierGroups == 6)
+
+HierCluster7 = subset(dailykos, hierGroups == 7)
+
+table(hierGroups)
+```
+
+##### What is the most frequent word in this cluster, in terms of average value? Enter the word exactly how you see it in the output:
+
+```{r howmanywords}
+# Sorts the words used in the cluster
+z = tail(sort(colMeans(HierCluster1)))
+kable(z)
+```
+
+After running the R command given above, we can see that the most frequent word on average is "bush". This corresponds to President George W. Bush.
+
+##### Which words best describe cluster 2?
+
+```{r howmanywordsc2}
+# Sorts the words used in the cluster
+z = tail(sort(colMeans(HierCluster2)))
+kable(z)
+```
+
+You can see that the words that best describe Cluster 2 are november, poll, vote, and challenge.
+
+##### Which cluster could best be described as the cluster related to the Iraq war?
+
+```{r howmanywordsiraq}
+# Sorts the words used in the cluster
+z = tail(sort(colMeans(HierCluster3)))
+kable(z)
+z = tail(sort(colMeans(HierCluster4)))
+kable(z)
+z = tail(sort(colMeans(HierCluster5)))
+kable(z)
+z = tail(sort(colMeans(HierCluster6)))
+kable(z)
+z = tail(sort(colMeans(HierCluster7)))
+kable(z)
+```
+
+The most common words in Cluster 5 are bush, iraq, war, and administration, so it is the cluster that can best be described as corresponding to the Iraq war.
+
+##### In 2004, one of the candidates for the Democratic nomination for the President of the United States was Howard Dean, John Kerry was the candidate who won the democratic nomination, and John Edwards with the running mate of John Kerry (the Vice President nominee). Given this information, which cluster best corresponds to the democratic party?
+
+```{r howmanywordsiraq2, results = FALSE}
+# Sorts the words used in the cluster
+z = tail(sort(colMeans(HierCluster3)))
+kable(z)
+z = tail(sort(colMeans(HierCluster4)))
+kable(z)
+z = tail(sort(colMeans(HierCluster5)))
+kable(z)
+z = tail(sort(colMeans(HierCluster6)))
+kable(z)
+z = tail(sort(colMeans(HierCluster7)))
+kable(z)
+```
+
+The most common words in Cluster 7 are dean, kerry, poll, and edward.
+
+### K-Means Clustering
+
+Now, run k-means clustering, setting the seed to 1000 right before you run the kmeans function. Again, pick the number of clusters equal to 7. You don't need to add the iters.max argument.
+
+Subset your data into the 7 clusters (7 new datasets) by using the "cluster" variable of your kmeans output.
+
+```{r kmeanscluster}
+# K-means algorithm
+set.seed(1000)
+kmc = kmeans(dailykos, centers=7)
+# Divides the dataset into 7 different subsets for each cluster
+KmeansCluster1 = subset(dailykos, kmc$cluster == 1)
+
+KmeansCluster2 = subset(dailykos, kmc$cluster == 2)
+
+KmeansCluster3 = subset(dailykos, kmc$cluster == 3)
+
+KmeansCluster4 = subset(dailykos, kmc$cluster == 4)
+
+KmeansCluster5 = subset(dailykos, kmc$cluster == 5)
+
+KmeansCluster6 = subset(dailykos, kmc$cluster == 6)
+
+KmeansCluster7 = subset(dailykos, kmc$cluster == 7)
+```
+
+#### How many observations are in Cluster 3?
+
+```{r cluster3obs}
+# Outputs the number of row 
+nrow(KmeansCluster3)
+```
+
+#### Which cluster has the fewest number of observations?
+
+```{r clusterleast}
+# Outputs the number of row 
+nrow(KmeansCluster1)
+nrow(KmeansCluster2)
+nrow(KmeansCluster3)
+nrow(KmeansCluster4)
+nrow(KmeansCluster5)
+nrow(KmeansCluster6)
+nrow(KmeansCluster7)
+```
+
+#### Which k-means cluster best corresponds to the Iraq War?
+
+
+```{r kmeansclusterwords}
+# Sorts the words used in the cluster
+z = tail(sort(colMeans(KmeansCluster1)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster2)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster3)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster4)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster5)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster6)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster7)))
+kable(z)
+```
+
+#### Which k-means cluster best corresponds to the democratic party? (Remember that we are looking for the names of the key democratic party leaders.)
+
+```{r kmeansclusterwordsdiff, results= FALSE}
+# Sorts the words used in the cluster
+z = tail(sort(colMeans(KmeansCluster1)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster2)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster3)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster4)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster5)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster6)))
+kable(z)
+z = tail(sort(colMeans(KmeansCluster7)))
+kable(z)
+```
+
+#### For the rest of this problem, we'll ask you to compare how observations were assigned to clusters in the two different methods. Use the table function to compare the cluster assignment of hierarchical clustering to the cluster assignment of k-means clustering.
+
+```{r hckmc2}
+# Tabulates the hierarchical cluster group vs the k-means cluster group 
+z = table(hierGroups, kmc$cluster)
+kable(z)
+```
+
+```{r x1}
+cl1 = z[1:7]/sum(z[1:7])
+x = cl1
+kable(x)
+which.max(cl1)
+```
+
+```{r x2}
+cl2 = z[8:14]/sum(z[8:14])
+x = cl2
+kable(x)
+which.max(cl2)
+```
+
+```{r x3}
+cl3 = z[15:21]/sum(z[15:21])
+x = cl3
+kable(x)
+which.max(cl3)
+```
+
+```{r x4}
+cl4 = z[22:28]/sum(z[22:28])
+x = cl4
+kable(x)
+which.max(cl4)
+```
+
+```{r x5}
+cl5 = z[29:35]/sum(z[29:35])
+x = cl5
+kable(x)
+which.max(cl5)
+```
+
+```{r x6}
+cl6 = z[36:42]/sum(z[36:42])
+x = cl6
+kable(x)
+which.max(cl6)
+```
+
+```{r x7}
+cl7 = z[43:49]/sum(z[43:49])
+x = cl7
+kable(x)
+which.max(cl7)
+```
+
+##### Which Hierarchical Cluster best corresponds to K-Means Cluster 2?
+From "table(hierGroups, KmeansCluster$cluster)", we read that 116 (80.6%) of the observations in K-Means Cluster 2 also fall in Hierarchical Cluster 7.
+
+##### Which Hierarchical Cluster best corresponds to K-Means Cluster 3?
+From "table(hierGroups, KmeansCluster$cluster)", we read that 171 (61.7%) of the observations in K-Means Cluster 3 also fall in Hierarchical Cluster 5.
+
+##### Which Hierarchical Cluster best corresponds to K-Means Cluster 7?
+From "table(hierGroups, KmeansCluster$cluster)", we read that no more than 123 (39.9%) of the observations in K-Means Cluster 7 fall in any hierarchical cluster.
+
+##### Which Hierarchical Cluster best corresponds to K-Means Cluster 6?
+From "table(hierGroups, KmeansCluster$cluster)", we read that 320 (97.3%) of observations in K-Means Cluster 6 fall in Hierarchical Cluster 2.
+
