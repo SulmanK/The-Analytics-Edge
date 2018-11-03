@@ -5,7 +5,7 @@ Rmarkdown notes following lectures of the edX/MIT MOOC Course
 
 These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
 
-* [Table of Contents](http://rpubs.com/SulmanKhan/432517) 
+* [Table of Contents](http://rpubs.com/SulmanKhan/436174) 
 * [Unit 1 : An Introduction to Analytics](http://rpubs.com/SulmanKhan/436166)
     * [Unit 1 : An Analytical Detective](http://rpubs.com/SulmanKhan/436170)
     * [Unit 1 : Stock Dynamics](http://rpubs.com/SulmanKhan/436172)
