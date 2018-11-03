@@ -1,0 +1,316 @@
+---
+title: 'Analytics Edge: Unit 6 - Segmenting Images to Create Data'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Seeing the Big Picture
+
+### Image Segmentation
+
+* Divide up digital images to salient regions/clusters corresponding to individual surfaces, objects, or natural parts of objects
+
+* Clusters should be uniform and homogeneous with respect to certain characteristics (color, intensity, texture)
+
+* **Goal:** Useful and analyzable image representation
+
+### Wide Applications
+
+* **Medical Imaging**
+    + **Locate tissues classes**, organs, pathologist, and **tumors**
+    + Measure tissue/tumor volume
+
+* Object Detection
+    + Detect facial features in photos
+    + Detect pedestrians in footage of surveillance videos
+
+* Recognition tasks
+    + Fingerprint/Iris recognition
+    
+### Various Methods
+
+* **Clustering methods**
+    + Partition image to clusters based on differences in pixel colors, intensity, or texture
+
+* Edge detection
+    + Based on detection of discontinuity, such as an abrupt change in the gray level in gray-scale images
+
+* Region-growing methods
+    + Divides image into regions, then sequentially merges sufficiently similar regions
+
+### Implementation
+
+* Restrict ourselves to gray-scale images
+    + Simple example of a flower image (flower.csv)
+    + Medical imaging application with examples of transverse MRI images of the brain (healthy.csv and tumor.csv)
+
+* Compare the use, pros and cons of all analytics techniques learned thus far
+
+### Grayscale Images
+
+* Image is represented as a matrix of pixel intensity values ranging from 0 (black) to 1 (white)
+
+* For 8 bits / pixel (bpp), 256 color levels
+
+<center>
+
+![](grayscale.png)
+
+</center> 
+
+### Grayscale Image Segmentation
+
+* Cluster pixels according to their intensity values
+
+<center>
+
+![](gsi.png)
+
+</center>
+
+### Flower Dendogram
+
+<center>
+
+![](fd.png)
+
+</center>
+
+### *k* - Means Clustering
+
+* The *k*-means clustering aims at partitioning the data in *k* clusters in which each data point belongs to the cluster whose mean is the nearest
+
+<center>
+
+![](kmeans.png)
+
+</center>
+
+### Segmented MRI Images
+
+<center>
+
+![](smri.png)
+
+</center>
+
+
+### T2 Weighted MRI Images
+
+<center>
+
+![](tmri.png)
+
+</center>
+
+
+### Comparison of Methods
+
+<center>
+
+![](comone.png)
+
+</center>
+
+<center>
+
+![](comtwo.png)
+
+</center>
+
+<center>
+
+![](comthree.png)
+
+</center>
+
+
+## Image Segmentation in R
+
+
+### Load in the Data
+```{r loadindata}
+# Load dataset in R
+flower = read.csv("flower.csv", header=FALSE)
+# Output string
+str(flower)
+```
+
+### Change the data type to matrix
+```{r changedatatype}
+# Change data type to matrix
+flowerMatrix = as.matrix(flower)
+# Output string
+str(flowerMatrix)
+```
+
+### Turn matrix into a vector
+```{r turnmatrixvect}
+# Turn matrix into vector
+flowerVector = as.vector(flowerMatrix)
+# Output string
+str(flowerVector)
+# Turn matrix into vecotr
+flowerVector2 = as.vector(flower)
+# Output string
+str(flowerVector2)
+```
+
+### Compute distances
+```{r computedist}
+# Compute euclidean distance
+distance = dist(flowerVector, method = "euclidean")
+```
+
+
+### Hierarchical clustering
+```{r hierarchical clustering}
+# Implement hierarchical clustering
+clusterIntensity = hclust(distance, method="ward")
+```
+
+### Plot the dendrogram
+```{r plotdendrogram}
+# Plot the dendrogram
+plot(clusterIntensity)
+```
+
+
+### Select 3 clusters
+```{r selectthreeclusters, ascii = TRUE}
+# Plot dendrodrogram
+plot(clusterIntensity)
+# Create 3 clusters on the dendrogram
+rect.hclust(clusterIntensity, k = 3, border = "red")
+# Divide the dataset into 3 clusters
+flowerClusters = cutree(clusterIntensity, k = 3)
+library(xtable)
+flowerClusters
+```
+
+### Find mean intensity values
+```{r findmeanintensity, "ascii" = TRUE}
+# Compare two groups using a statistical measure
+z = tapply(flowerVector, flowerClusters, mean)
+kable(z)
+```
+
+### Plot the image and the clusters
+```{r plotimageclusters}
+# Set the dimensions of the image
+dim(flowerClusters) = c(50,50)
+image(flowerClusters, axes = FALSE)
+```
+
+### Original image
+```{r original image}
+# Original Image
+image(flowerMatrix,axes=FALSE,col=grey(seq(0,1,length=256)))
+```
+
+
+### Let's try this with an MRI image of the brain
+
+```{r mriimagebrain}
+# Load the dataset
+healthy = read.csv("healthy.csv", header=FALSE)
+# Convert into a matrix
+healthyMatrix = as.matrix(healthy)
+str(healthyMatrix)
+```
+
+#### Plot image
+```{r plotimageofbrainss}
+# Plot the image
+image(healthyMatrix,axes=FALSE,col=grey(seq(0,1,length=256)))
+```
+
+#### Hierarchial clustering
+```{r healthvector}
+# Change into a vector
+healthyVector = as.vector(healthyMatrix)
+```
+
+distance = dist(healthyVector, method = "euclidean")
+
+Cannot compute the distance because the vector is very large.
+
+
+
+
+
+#### Specify number of clusters
+```{r specifck5}
+# Number of clusters
+k = 5
+```
+
+#### Run k-means
+```{r kmeansclust}
+# Implement the k - means algorithm
+set.seed(1)
+KMC = kmeans(healthyVector, centers = k, iter.max = 1000)
+str(KMC)
+```
+
+#### Extract clusters
+```{r extractclusters}
+# Extract clusters
+healthyClusters = KMC$cluster
+KMC$centers[2]
+```
+
+#### Plot the image with the clusters
+```{r plotimageclustersmribrian}
+# Plot the image with clusters
+dim(healthyClusters) = c(nrow(healthyMatrix), ncol(healthyMatrix))
+
+image(healthyClusters, axes = FALSE, col=rainbow(k))
+```
+
+
+
+### Apply to a test image
+```{r applytestimage}
+# Load dataset
+tumor = read.csv("tumor.csv", header=FALSE)
+# Convert to matrix
+tumorMatrix = as.matrix(tumor)
+# Convert to vector
+tumorVector = as.vector(tumorMatrix)
+```
+
+#### Apply clusters from before to new image, using the flexclust package
+```{r applyclusterpackages}
+# Implement the flexclust package and apply clusters from before to new image
+library(flexclust)
+KMC.kcca = as.kcca(KMC, healthyVector)
+tumorClusters = predict(KMC.kcca, newdata = tumorVector)
+```
+
+#### Visualize the clusters
+```{r visualizeclusterstest}
+# Visualize the clusters
+dim(tumorClusters) = c(nrow(tumorMatrix), ncol(tumorMatrix))
+image(tumorClusters, axes = FALSE, col=rainbow(k))
+```
+

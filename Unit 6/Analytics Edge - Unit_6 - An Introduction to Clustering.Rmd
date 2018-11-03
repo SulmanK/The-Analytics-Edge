@@ -1,0 +1,350 @@
+---
+title: 'Analytics Edge: Unit 6 - An Introduction to Clustering'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Recommendations Worth a Million 
+
+### Netflix
+
+* Online DVD rental and steaming video service
+
+* More than 40 million subscribers worldwide
+
+* $3.6 billion in revenue
+
+* Key aspect is being able to offer customers accurate movie recommendations based on customer's own preferences and viewing history
+
+### The Netflix Prize
+
+* From 2006 - 2009 Netflix ran a contest asking the public to submit algorithms to predict user ratings for movies
+
+* Training data set of ~100,000,000 ratings and test data set of ~3,000,000 ratings were provided
+
+* Offered a grand prize of $1,000,000 USD to the team who could beat Netflix's own algorithm, Cinematch, by more than 10%, measured in RMSE
+
+### Predicting the Best User Ratings
+
+* Netflix was willing to pay over $1M for the best user rating algorithm, which shows how critical the recommendation system was to their business
+
+* What data could be used to predict user ratings?
+
+* Every movie in Netflix's database has the ranking from all users who have ranked that movie
+
+* We also know facts about the movie itself, actors, directors, genre classification, year released, etc.
+
+### Using Other Users' Rankings
+
+<center>
+
+![](Collaborative.png)
+
+</center>
+
+
+* Consider suggesting to Carl that he watch "Men in Black", since Amy rated it highly and Carl and Amy seem to have similar preferences
+
+* This technique is called **Collaborative Filtering**
+
+### Using Movie Information
+
+* We saw that Amy liked "Men In Black"
+    + It was directed by Barry Sonnenfeld
+    + Classified in the genres of action, adventure, sci-fi and comedy
+    + It stars actor Will Smith
+
+* Consider recommending Amy:
+    + Barry Sonnenfeld's movie "Get Shorty"
+    + "Jurassic Park", which is in the genres of action, adventure, and sci-fi
+    + Will Smith's movie "Hitch"
+
+* This technique is called **COntent Filtering**
+
+
+
+### Strengths and Weaknesses
+
+* Collaborative Filtering Systems
+    + Can accurately suggest complex items without understanding the nature of the items
+    + Requires a lot of data about the user to make accurate recommendations
+    + Millions of items - needs lots of computing power
+
+* Content Filtering
+    + Requires very little data to get started
+    + Can be limited in scope
+    
+### Hybrid Recommendation Systems
+
+* Netflix uses both collaborative and content filtering
+
+* For example, consider a collaborative filtering approach where we determine that Amy and Carl have similar preferences
+
+* We could then do content filtering, where we would find that "Terminator", which both Amy and Carl liked, is classified in almost the same set of genres as "Starship Troopers"
+
+* Recommend "Starship Troopers" to both Amy and Carl, even though neither of them have seen it before
+
+### MovieLens Data
+
+* [www.movielens.org](https://movielens.org/) is a movie recommendation website run by GroupLens Research Lab at the University of Minnesota
+
+* They collect user preferences about movies and do collaborative filtering to make recommendations we will use their movie database to do content filtering using a technique called clustering
+
+### Why Clustering?
+
+* "Unsupervised" learning
+    + Goal is to segment the data into similar groups instead of prediction
+*  Can also cluster data into "similar" groups and then build a predictive model for each group
+    + Be careful not to overfit your model! This works best with large data sets
+
+### Types of Clustering Methods
+
+* There are many different algorithms for clustering
+    + Differ in what makes a cluster and how to find them
+
+* We will cover
+    + Hierarchical
+    + K-means 
+
+### Distance Between Points
+
+* Need to define distance between two data data points
+    + Most popular is "Euclidean distance"
+    + Distance between points i and j is
+    $$d_ij = \sqrt[2][(x_{i,1} - x_{j,1})^2 + (x_{i,2} - x_{j,2})^2 + ... + (x_{ik} - x_{jk})^2]$$
+    where k is the number of independent variables
+
+### Distance Example
+
+* The movie "Toy Story" is categorized as Animation, Comedy, and Children
+    + Toy Story: (0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0) 
+
+* The movie "Batman Forever" is categorized as Action, Adventure, Comedy, and Crime
+    + Batman Forever: (0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0)
+
+<center>
+
+![](Distance.png)
+
+</center>
+
+* Other popular distance metrics:
+    + Manhattan Distance
+        - Sum of absolute values instead of squares
+    + Maximum Coordinate Distance
+        - Only consider measurement for which data points deviate the most
+
+### Distance Between Clusters
+
+* Minimum Distance
+    + Distance between clusters is the distance between points that are the closest
+    
+
+<center>
+
+![](dbc.png)
+
+</center>
+
+* Maximum Distance
+    + Distance between clusters is the distance between points 
+that are the farthest 
+
+<center>
+
+![](dbc2.png)
+
+</center>
+
+
+* Centroid Distance
+    + Distance between centroids of clusters
+        - Centroid is point that has the average of all data points in each component 
+
+
+<center>
+
+![](dbc3.png)
+
+</center>
+
+### Normalize Data
+
+* Distance is highly influenced by scale of variables, so customary to normalize first
+
+* In our movie dataset, all genre variables are on the same scale and so normalization is not necessary
+
+* However, if we included a variable such as "Box Office Revenue", we would need to normalize
+
+### Hierarchical
+
+* Start with each data point in its own cluster
+
+<center>
+
+![](h1.png)
+
+</center>
+
+* Combine two nearest clusters (Euclidean, Centroid)
+
+<center>
+
+![](h2.png)
+
+</center>
+
+### Display Cluster Process
+
+<center>
+
+![](cp1.png)
+
+</center>
+
+### Select Clusters
+
+<center>
+
+![](cp2.png)
+
+</center>
+
+### Meaningful Clusters?
+
+* Look at statistics (mean, min, max, ...) for each cluster and each variable
+* See if clusters have a feature in common that was not used in the clustering (like an outcome)
+
+### The Edge of Recommendation Systems
+
+* In today's digital age, businesses often have hundreds of thousands of items to offer their customers
+
+* Excellent recommendation systems can make or break these businesses
+
+* Clustering algorithms, which are tailored to find similar customers or similar items, form the backbone of many of these recommendation systems.
+
+
+## Netflix in R
+
+### Introduction to Clustering
+
+#### Load the data into R
+```{r loaddata}
+# Load the dataset
+movies = read.table("movieLens.txt", header=FALSE, sep="|",quote="\"")
+# Output the string of the dataset
+str(movies)
+```
+
+#### Add column names
+```{r addcolumnames}
+# Add column names
+colnames(movies) = c("ID", "Title", "ReleaseDate", "VideoReleaseDate", "IMDB", "Unknown", "Action", "Adventure", "Animation", "Childrens", "Comedy", "Crime", "Documentary", "Drama", "Fantasy", "FilmNoir", "Horror", "Musical", "Mystery", "Romance", "SciFi", "Thriller", "War", "Western")
+# Outputs the string
+str(movies)
+```
+
+#### Remove unnecessary variables
+```{r removeunnessaryvar}
+# Remove unecessary variables
+movies$ID = NULL
+movies$ReleaseDate = NULL
+movies$VideoReleaseDate = NULL
+movies$IMDB = NULL
+```
+
+#### Remove duplicates
+```{r removeduplicates}
+# Remove duplicates
+movies = unique(movies)
+```
+
+#### Take a look at our data again:
+```{r examine data}
+# Examine the string
+str(movies)
+```
+
+
+
+
+#### Compute distances
+```{r computeeuclideand}
+# Compute euclidean distance
+distances = dist(movies[2:20], method = "euclidean")
+```
+
+#### Hierarchical clustering
+```{r hierarchical clustering}
+# Implement hierarchical clustering algorithm
+clusterMovies = hclust(distances, method = "ward") 
+```
+
+#### Plot the dendrogram
+```{r plotdendrogram}
+# Plot the dendrogram
+plot(clusterMovies)
+```
+
+#### Assign points to clusters
+```{r assignpoints}
+# Divide the points into 10 clusters
+clusterGroups = cutree(clusterMovies, k = 10)
+```
+
+
+#### Let's use the tapply function to compute the percentage of movies in each genre and cluster
+
+```{r tapply}
+# Compare two different categories using a statistical measure
+z = tapply(movies$Action, clusterGroups, mean)
+x = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+y = cbind(x,z)
+kable(y)
+z = tapply(movies$Romance, clusterGroups, mean)
+y = cbind(x,z)
+kable(y)
+```
+
+We can repeat this for each genre. If you do, you get the results in ClusterMeans.ods
+
+
+#### Find which cluster Men in Black is in.
+```{r meninb}
+# Find which subset men in black is in
+z = subset(movies, Title=="Men in Black (1997)")
+kable(z)
+clusterGroups[257]
+```
+
+#### Create a new data set with just the movies from cluster 2
+```{r newc}
+# Create a subset with movies from cluster 2
+cluster2 = subset(movies, clusterGroups==2)
+```
+
+#### Look at the first 10 titles in this cluster:
+```{r first10titles}
+# Examine the first 10 titles in the cluster
+z = cluster2$Title[1:10]
+kable(z)
+```

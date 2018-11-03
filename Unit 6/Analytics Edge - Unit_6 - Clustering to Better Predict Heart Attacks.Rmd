@@ -1,0 +1,240 @@
+---
+title: 'Analytics Edge: Unit 6 - Clustering to Better Predict Heart Attacks'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Predictive Diagnosis
+
+### Heart Attacks
+
+* Heart attack is a common complication of coronary heart disease resulting from the interruption of blood supply to part of the heart
+
+* 2012 report from the American Heart Association estimates **about 715,000** Americans have a heart attack every year
+    + **Every 20 seconds**, a person has a heart attack in the US
+    + Nearly **half** occur without prior warning signs
+    + **250,000** Americans die of Sudden Cardiac Death yearly
+    
+* Well - known symptoms
+    + Chest pain, shortness of breath, upper body pain, nausea
+
+* Nature of heart attacks make it hard to predict, prevent and even diagnose
+    + **25%** of heart attacks are silent
+    + **47%** of sudden cardiac deaths occur outside hospitals, suggesting many do not act on early warning signs
+    + **27%** of respondents to a 2005 survey recognized the symptoms and called 911 for help
+
+### Analytics Help Monitoring
+
+* Understanding the clinical characteristics of patients in whom heart attack was missed is key
+
+* Need for an increased understanding of patterns in a patient's diagnostic history that link to a heart attack
+
+* Predicting whether a patient is at risk of a heart attack helps monitoring and calls for action
+
+* Analytics help **understand patterns** of heart attacks and provides good predictions
+
+
+### Claims Data
+
+* Claims data offers an expansive view of a patient's health history
+    + Demographics, medical history and medications
+    + Offers insights regarding a patient's risk
+    + May reveal **indicative signals and patterns**
+
+* We will use health insurance claims filed for about 7,000 members from January 200 - November 2007
+
+
+* Concentrated on members with the following attributes
+    + At least 5 claims with coronary artery disease diagnosis
+    + At least 5 claims with hypertension diagnostic codes
+    + At least 100 total medical claims
+    + At least 5 pharmacy claims
+    + Data from at least 5 years
+
+* Yields patients with a high risk of heart attack and a reasonably rich history and continuous coverage
+
+### Data Aggregation
+
+* The resulting dataset includes about **20 million health insurance entries** including individual medical and pharmaceutical records
+
+* Diagnosis, procedure, and drug codes in the dataset comprise tens of thousands of attributes
+
+* Codes were aggregated into groups
+    + 218 diagnosis groups, 180 procedure groups, 538 drug groups
+    + 46 diagnosis groups were considered by clinicians as possible risk factors for heart attacks
+    
+### Diagnostic History
+
+* We then compress medical records to obtain a chronological representation of a patient's diagnostic profile
+    + Cost and number of medical claims and hospital visits by diagnosis
+
+* Observations split into 21 periods, each 90 days in length
+    + Examined 9 months of diagnostic history leading up to heart attacks/no heart attack event
+    + Align data to make observations date-independent while preserving the order of events
+        - 3 months ~ 0 - 3 months before heart attack
+        - 6 months ~ 3 - 6 months before heart attack
+        - 9 months ~ 6 - 9 months before heart attack
+
+### Target Variable
+
+* Target prediction is the first occurrence of a heart attack
+    + Diagnosis on medical claim
+    + Visit to emergency room followed by hospitalization
+    + Binary Yes/No
+
+### Dataset Compilation
+
+<center>
+
+![](dc.png)
+
+</center>
+
+### Cost Bucket Partitioning
+
+* Cost is a good summary of a person's overall health
+
+* Divide population into similar smaller groups
+    + Low risk, average risk, high risk
+
+<center>
+
+![](bucket.png)
+
+</center>
+
+* Build models for each group
+
+### Predicting Heart Attacks (Random Forest)
+
+* Predicting whether a patient has a heart attack for each of the cost buckets using the random forest algorithm
+
+<center>
+
+![](rf.png)
+
+</center>
+
+### Incorporating Clustering
+
+* Patients in each bucket may have different characteristics
+
+<center>
+
+![](pc.png)
+
+</center>
+
+### Clustering Cost Buckets
+
+* Two clustering algorithms were used for the analysis as an alternative to hierarchical clustering
+    + Spectral Clustering
+    + *k-means* clustering
+
+<center>
+
+![](kmeans.png)
+
+</center>
+
+### *k* - Means Clustering
+
+<center>
+
+![](k1.png)
+
+</center>
+
+<center>
+
+![](k2.png)
+
+</center>
+
+<center>
+
+![](k3.png)
+
+</center>
+
+<center>
+
+![](k4.png)
+
+</center>
+
+<center>
+
+![](k5.png)
+
+</center>
+
+<center>
+
+![](k6.png)
+
+</center>
+
+<center>
+
+![](k7.png)
+
+</center>
+
+### Practical Considerations
+
+* The number of *k* can be selected from previous knowledge or experimenting
+
+* Can strategically select initial partition of points into clusters if you have some knowledge of the data
+
+* Can run algorithm several times with different random starting points
+
+### Random Forest with Clustering
+
+<center>
+
+![](rfc.png)
+
+</center>
+
+### Predicting Heart Attacks
+
+* Perform clustering on each bucket using *k* = 10 clusters
+
+* Average prediction rate for each cost bucket
+
+<center>
+
+![](phc.png)
+
+</center>
+
+### Impact of Clustering
+
+* Clustering members with each cost bucket yielded better predictions of heart attacks within clusters
+
+* Grouping patients in clusters exhibit temporal diagnostic patterns within 9 months of a heart attack
+
+* These patterns can be incorporated in the diagnostic rules for heart attacks
+
+* Greater research interns in using analytics for early heart failure detection through pattern recognition
+
