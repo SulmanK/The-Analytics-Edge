@@ -1,0 +1,265 @@
+---
+title: 'Analytics Edge: Unit 3 - Predicting Parole Violators'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Predicting Parole Violators
+
+### Background Information on the Dataset
+
+In many criminal justice systems around the world, inmates deemed not to be a threat to society are released from prison under the parole system prior to completing their sentence. They are still considered to be serving their sentence while on parole, and they can be returned to prison if they violate the terms of their parole.
+
+Parole boards are charged with identifying which inmates are good candidates for release on parole. They seek to release inmates who will not commit additional crimes after release. In this problem, we will build and validate a model that predicts if an inmate will violate the terms of his or her parole. Such a model could be useful to a parole board when deciding to approve or deny an application for parole.
+
+For this prediction task, we will use data from the United States 2004 National Corrections Reporting Program, a nationwide census of parole releases that occurred during 2004. We limited our focus to parolees who served no more than 6 months in prison and whose maximum sentence for all charges did not exceed 18 months. The dataset contains all such parolees who either successfully completed their term of parole during 2004 or those who violated the terms of their parole during that year. The dataset contains the following variables:
+
+
+*    **male**: 1 if the parolee is male, 0 if female
+*    **race**: 1 if the parolee is white, 2 otherwise
+*    **age**: the parolee's age (in years) when he or she was released from prison
+*    **state**: a code for the parolee's state. 2 is Kentucky, 3 is Louisiana, 4 is Virginia, and 1 is any other state. The three states were selected due to having a high representation in the dataset.
+*    **time.served**: the number of months the parolee served in prison (limited by the inclusion criteria to not exceed 6 months).
+*    **max.sentence**: the maximum sentence length for all charges, in months (limited by the inclusion criteria to not exceed 18 months).
+*    **multiple.offenses**: 1 if the parolee was incarcerated for multiple offenses, 0 otherwise.
+*    **crime**: a code for the parolee's main crime leading to incarceration. 2 is larceny, 3 is drug-related crime, 4 is driving-related crime, and 1 is any other crime.
+*    **violator**: 1 if the parolee violated the parole, and 0 if the parolee completed the parole without violation.
+
+### Loading the Dataset 
+```{r loaddata}
+# Load the data
+parole = read.csv("parole.csv")
+```
+
+#### How many parolees are contained in the dataset?
+```{r countnumber}
+# Count the number of parolees
+nrow(parole)
+```
+
+675 parolees.
+
+#### How many of the parolees in the dataset violated the terms of their parole?
+
+```{r howmanyviolator}
+# Count the number of violators
+z = table(parole$violator)
+kable(z)
+```
+
+78 parolees have violated the terms of their parole.
+
+### Preparing the Dataset
+
+#### Which variables in this dataset are unordered factors with at least three levels? 
+
+```{r unorderedfacotrs}
+# Output the structure
+str(parole)
+```
+
+While the variables male, race, state, crime, and violator are all unordered factors, only state and crime have at least 3 levels in this dataset. 
+
+#### How does the output of summary() change for a factor variable as compared to a numerical variable?
+
+
+```{r nowconverttofacotr}
+# Convert to Factor
+parole$state = as.factor(parole$state)
+parole$crime = as.factor(parole$crime)
+# Output Summary
+summary(parole$state)
+summary(parole$crime)
+```
+
+The output of summary(parole\$state) or summary(parole$crime) now shows a breakdown of the number of parolees with each level of the factor, which is most similar to the output of the table() function. 
+
+#### Roughly what proportion of parolees have been allocated to the training and testing sets?
+```{r split the data}
+# Split the data
+set.seed(144)
+library(caTools)
+split = sample.split(parole$violator, SplitRatio = 0.7)
+train = subset(parole, split == TRUE)
+test = subset(parole, split == FALSE)
+```
+
+SplitRatio=0.7 causes split to take the value TRUE roughly 70% of the time, so train should contain roughly 70% of the values in the dataset.
+
+#### Now, suppose you re-ran lines [1]-[5] of Problem 3.1. What would you expect?
+
+The exact same training/testing set split as the first execution of [1]-[5] correct 
+
+#### If you instead ONLY re-ran lines [3]-[5], what would you expect?
+
+A different training/testing set split from the first execution of [1]-[5]
+
+#### If you instead called set.seed() with a different number and then re-ran lines [3]-[5] of Problem 3.1, what would you expect?
+
+A different training/testing set split from the first execution of [1]-[5]
+
+### Building a Logistic Regression Model 
+
+Using glm (and remembering the parameter family="binomial"), train a logistic regression model on the training set. Your dependent variable is "violator", and you should use all of the other variables as independent variables.
+
+#### What variables are significant in this model? Significant variables should have a least one star, or should have a probability less than 0.05 (the column Pr(>|z|) in the summary output).
+
+```{r logreg1}
+# Logistic Regression
+mod = glm(violator~., data=train, family="binomial")
+# Output the summary
+summary(mod)
+```
+
+race, state4, and multiple.offenses are significant in this model.
+
+#### What can we say based on the coefficient of the multiple.offenses variable?
+
+Our model predicts that a parolee who committed multiple offenses has 5.01 times higher odds of being a violator than a parolee who did not commit multiple offenses but is otherwise identical.
+
+#### According to the model, what are the odds this individual is a violator?
+
+```{r logodds}
+# Calculate log odds
+male=1 
+race=1
+age=50
+state2=0
+state3=0
+state4=0
+time.served=3
+max.sentence=12
+multiple.offenses=0
+crime2=1
+crime3=0
+crime4=0
+logodds =-4.2411574 + 0.3869904*male + 0.8867192*race - 0.0001756*age + 0.4433007*state2 + 0.8349797*state3 - 3.3967878*state4 - 0.1238867*time.served + 0.0802954*max.sentence + 1.6119919*multiple.offenses + 0.6837143*crime2 - 0.2781054*crime3 - 0.0117627*crime4
+logodds
+odds = exp(logodds)
+odds
+```
+
+Odds = 0.1825687
+
+#### According to the model, what is the probability this individual is a violator?
+
+```{r loadodddspos}
+# Calculate Probability
+1/(1 + exp(-logodds))
+```
+
+Probability = 0.1543831
+
+### Evaluating the Model on the Testing Set 
+
+Use the predict() function to obtain the model's predicted probabilities for parolees in the testing set, remembering to pass type="response".
+
+```{r makepredictions}
+# Make Predictions
+predictions = predict(mod, newdata=test, type="response")
+```
+
+#### What is the maximum predicted probability of a violation?
+```{r maxpredicted porb}
+# Output the summary
+summary(predictions)
+```
+
+Max Probability = 0.907
+
+#### Evaluate the model's predictions on the test set using a threshold of 0.5.
+
+```{r threshold05}
+# Model Predictions with threshold of 0.5
+z = table(test$violator, as.numeric(predictions >= 0.5))
+kable(z)
+```
+
+##### What is the model's sensitivity?
+```{r sensitivty}
+# Calculate Sensitivty
+z[4]/(z[4]+z[2])
+```
+
+Sensitivity = 0.522
+
+##### What is the model's specificity?
+```{r spec}
+# Calculate specifcity
+z[1]/(z[3]+z[1])
+```
+
+Specificity = 0.933
+
+##### What is the model's accuracy?
+```{r acc}
+# Calculate accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.886
+
+##### What is the accuracy of a simple model that predicts that every parolee is a non-violator? 
+
+```{r baseline}
+# Tabulate the baseline
+z = table(test$violator)
+kable(z)
+z[1]/z[2]
+```
+
+Accuracy = 0.886
+
+#### Consider a parole board using the model to predict whether parolees will be violators or not. The job of a parole board is to make sure that a prisoner is ready to be released into free society, and therefore parole boards tend to be particularily concerned about releasing prisoners who will violate their parole. Which of the following most likely describes their preferences and best course of action?
+
+ If the board used the model for parole decisions, a negative prediction would lead to a prisoner being granted parole, while a positive prediction would lead to a prisoner being denied parole. The parole board would experience more regret for releasing a prisoner who then violates parole (a negative prediction that is actually positive, or false negative) than it would experience for denying parole to a prisoner who would not have violated parole (a positive prediction that is actually negative, or false positive).
+
+Decreasing the cutoff leads to more positive predictions, which increases false positives and decreases false negatives. Meanwhile, increasing the cutoff leads to more negative predictions, which increases false negatives and decreases false positives. The parole board assigns high cost to false negatives, and therefore should decrease the cutoff. 
+
+#### Which of the following is the most accurate assessment of the value of the logistic regression model with a cutoff 0.5 to a parole board, based on the model's accuracy as compared to the simple baseline model?
+
+The model at cutoff 0.5 has 12 false positives and 11 false negatives, while the baseline model has 0 false positives and 23 false negatives. Because a parole board is likely to assign more cost to a false negative, the model at cutoff 0.5 is likely of value to the board.
+
+From the previous question, the parole board would likely benefit from decreasing the logistic regression cutoffs, which decreases the false negative rate while increasing the false positive rate.
+
+#### Using the ROCR package, what is the AUC value for the model?
+
+```{r rocr package}
+# Calculate AUC
+library(ROCR)
+
+pred = prediction(predictions, test$violator)
+
+as.numeric(performance(pred, "auc")@y.values)
+```
+
+AUC =  0.8945834
+
+#### Describe the meaning of AUC in this context.
+
+The AUC deals with differentiating between a randomly selected positive and negative example. It is independent of the regression cutoff selected. 
+
+#### The dataset contains all individuals released from parole in 2004, either due to completing their parole term or violating the terms of their parole. However, it does not contain parolees who neither violated their parole nor completed their term in 2004, causing non-violators to be underrepresented. This is called "selection bias" or "selecting on the dependent variable," because only a subset of all relevant parolees were included in our analysis, based on our dependent variable in this analysis (parole violation). How could we improve our dataset to best address selection bias?
+
+ While expanding the dataset to include the missing parolees and labeling each as violator=0 would improve the representation of non-violators, it does not capture the true outcome, since the parolee might become a violator after 2004. Though labeling these new examples with violator=NA correctly identifies that we don't know their true outcome, we cannot train or test a prediction model with a missing dependent variable.
+
+As a result, a prospective dataset that tracks a cohort of parolees and observes the true outcome of each is more desirable. Unfortunately, such datasets are often more challenging to obtain (for instance, if a parolee had a 10-year term, it might require tracking that individual for 10 years before building the model). Such a prospective analysis would not be possible using the 2004 National Corrections Reporting Program dataset. 

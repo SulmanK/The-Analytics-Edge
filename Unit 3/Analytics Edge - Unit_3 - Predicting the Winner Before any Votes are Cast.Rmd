@@ -1,0 +1,197 @@
+---
+title: 'Analytics Edge: Unit 3 - Predicting the Winner Before any Votes are Cast '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Election Forecasting
+
+### United States Presidential Elections
+* A president is elected every four years
+
+* Generally, only two competitive candidates
+    + Republican
+    + Democratic
+
+
+<center>
+
+![](pres.png)
+
+</center>
+
+### The Electoral College
+* The United States have 50 states
+* Each assigned a number of *electoral votes* based on population
+      + Most votes: 55 (California)
+      + Least votes: 3 (multiple states)
+      + Reassigned periodically based on population changes
+* Winner takes all: candidate with the most votes in a state gets all its electoral votes
+* Candidate with most electoral votes win election
+
+### 2000 Election: Bush vs Gore
+
+<center>
+
+![](bvg.png)
+
+</center>
+
+</center>
+
+### Election Prediction
+* Goal: Use polling data to predict state winners
+* Then - *New York Times* columnist Nate Silver famously took on this task for the 2012 election
+
+### The Dataset
+* Data from RealClearPolitics.com
+* Instances represent a state in a given election
+    + *State*: Name of state
+    + *Year*: Election year (2004, 2008, 20012)
+* Dependent variable
+    + *Republican*: 1 if Republican won state, 0 if Democrat won
+* Independent variables
+    + *Rasmussen, SurveyUSA*: Polled R% - Polled D%
+    + *DiffCount*: Polls with R winner - Polls with D winner
+    + *PrepR*: Polls with R winner / # polls
+
+### Simple Approaches to Missing Data
+* Delete the missing observations
+    + We would be throwing away more than 50% of the data
+    + We want to predict for all states
+* Delete variables with missing values
+    + We want to retain data from Rasmussen/SurveyUSA
+* Fill missing data points with average values
+    + The average value for a poll will be close to 0 (tie between Democrat and Republican)
+    + If other polls in a state favor one candidate, the missing one probably would have, too
+
+### Multiple Imputation
+* Fill in missing values based on non-missing values
+    + If Rasmussen is very negative, then a missing SurveyUSA value will likely be negative
+    + Just like *sample.split* results will differ between runs unless you fix the random seed
+* Although the method is complicated, we can use it easily through R's libraries
+* We will use Multiple Imputation by Chained Equations (mice) package
+
+### Election Forecasting in R
+
+### Load in the data
+```{r loaddata}
+# Read in data
+polling = read.csv("PollingData.csv")
+str(polling)
+z = table(polling$Year)
+kable(z)
+z = summary(polling)
+kable(z)
+```
+
+### Load mice package
+```{r loadmice}
+# Load mice package
+library(mice)
+```
+
+### Multiple imputations
+```{r multimp}
+# Multiple imputation
+simple = polling[c("Rasmussen", "SurveyUSA", "PropR", "DiffCount")]
+z = summary(simple)
+kable(z)
+```
+
+### Split the data
+```{r slit data}
+# Split the data
+set.seed(144)
+imputed = complete(mice(simple))
+z = summary(imputed)
+kable(z)
+polling$Rasmussen = imputed$Rasmussen
+polling$SurveyUSA = imputed$SurveyUSA
+z = summary(polling)
+kable(z)
+Train = subset(polling, Year == 2004 | Year == 2008)
+Test = subset(polling, Year == 2012)
+```
+
+### Baseline
+```{r baseline}
+# Smart Baseline
+z = table(Train$Republican)
+kable(z)
+sign(20)
+sign(-10)
+sign(0)
+z = table(sign(Train$Rasmussen))
+kable(z)
+z = table(Train$Republican, sign(Train$Rasmussen))
+kable(z)
+```
+
+
+
+### Multicollinearity
+```{r multicollinearity}
+# Multicollinearity
+cor(Train[c("Rasmussen", "SurveyUSA", "PropR", "DiffCount", "Republican")])
+```
+
+### Logistic Regression
+```{r logreg}
+# Logistic Regression Model
+mod1 = glm(Republican~PropR, data=Train, family="binomial")
+summary(mod1)
+```
+
+### Make predictions
+```{r makep}
+# Training set predictions
+pred1 = predict(mod1, type="response")
+z = table(Train$Republican, pred1 >= 0.5)
+kable(z)
+```
+### Two-variable Model
+```{r twovarmodel}
+# Two-variable model
+mod2 = glm(Republican~SurveyUSA+DiffCount, data=Train, family="binomial")
+# Make predictions
+pred2 = predict(mod2, type="response")
+z = table(Train$Republican, pred2 >= 0.5)
+kable(z)
+summary(mod2)
+```
+
+
+### Analysis
+```{r analze}
+# Smart baseline accuracy
+z = table(Test$Republican, sign(Test$Rasmussen))
+kable(z)
+
+# Test set predictions
+TestPrediction = predict(mod2, newdata=Test, type="response")
+z = table(Test$Republican, TestPrediction >= 0.5)
+kable(z)
+
+# Analyze mistake
+subset(Test, TestPrediction >= 0.5 & Republican == 0)
+```

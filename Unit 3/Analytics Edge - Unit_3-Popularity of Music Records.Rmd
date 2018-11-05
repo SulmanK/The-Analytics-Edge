@@ -1,0 +1,275 @@
+---
+title: 'Analytics Edge: Unit 3 - Popularity of Music Records'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Popularity of Music Records
+
+### Background Information on the Dataset
+
+The music industry has a well-developed market with a global annual revenue around $15 billion. The recording industry is highly competitive and is dominated by three big production companies which make up nearly 82% of the total annual album sales.
+
+Artists are at the core of the music industry and record labels provide them with the necessary resources to sell their music on a large scale. A record label incurs numerous costs (studio recording, marketing, distribution, and touring) in exchange for a percentage of the profits from album sales, singles and concert tickets.
+
+Unfortunately, the success of an artist's release is highly uncertain: a single may be extremely popular, resulting in widespread radio play and digital downloads, while another single may turn out quite unpopular, and therefore unprofitable.
+
+Knowing the competitive nature of the recording industry, record labels face the fundamental decision problem of which musical releases to support to maximize their financial success.
+
+How can we use analytics to predict the popularity of a song? In this assignment, we challenge ourselves to predict whether a song will reach a spot in the Top 10 of the Billboard Hot 100 Chart.
+
+Taking an analytics approach, we aim to use information about a song's properties to predict its popularity. The dataset songs.csv consists of all songs which made it to the Top 10 of the Billboard Hot 100 Chart from 1990-2010 plus a sample of additional songs that didn't make the Top 10. This data comes from three sources: Wikipedia, Billboard.com, and EchoNest.
+
+The variables included in the dataset either describe the artist or the song, or they are associated with the following song attributes: time signature, loudness, key, pitch, tempo, and timbre.
+
+Here's a detailed description of the variables:
+
+
+*    **year** = the year the song was released
+*    **songtitle** = the title of the song
+*    **artistname** = the name of the artist of the song
+*    **songID** and **artistID** = identifying variables for the song and artist
+*    **timesignature** and **timesignature_confidence** = a variable estimating the time signature of the song, and the confidence in the estimate
+*    **loudness** = a continuous variable indicating the average amplitude of the audio in decibels
+*    **tempo** and **tempo_confidence** = a variable indicating the estimated beats per minute of the song, and the confidence in the estimate
+*    **key** and **key_confidence** = a variable with twelve levels indicating the estimated key of the song (C, C#, . . ., B), and the confidence in the estimate
+*    **energy** = a variable that represents the overall acoustic energy of the song, using a mix of features such as loudness
+*    **pitch** = a continuous variable that indicates the pitch of the song
+*    **timbre_0_min**, **timbre_0_max**, **timbre_1_min**, **timbre_1_max**, . . . , **timbre_11_min**, and **timbre_11_max** = variables that indicate the minimum/maximum values over all segments for each of the twelve values in the timbre vector (resulting in 24 continuous variables)
+*    **Top10** = a binary variable indicating whether or not the song made it to the Top 10 of the Billboard Hot 100 Chart (1 if it was in the top 10, and 0 if it was not)
+
+
+### Understanding the Data
+Use the read.csv function to load the dataset "songs.csv" into R. 
+
+```{r loaddata}
+# Load the data
+songs = read.csv("songs.csv")
+```
+
+#### How many observations (songs) are from the year 2010?
+
+```{r observation}
+# Count the number of observations
+z = table(songs$year)
+kable(z)
+```
+
+373 songs are from year 2010.
+
+#### How many songs does the dataset include for which the artist name is "Michael Jackson"?
+
+```{r michaeljackson}
+# How many songs from michael jackson
+z = table(songs$artistname == "Michael Jackson")
+kable(z)
+MichaelJackson = subset(songs, artistname == "Michael Jackson")
+```
+
+18 songs are from the artist Michael Jackson.
+
+#### Which of these songs by Michael Jackson made it to the Top 10?
+
+```{r Michaeljacksontop10}
+# Output top 10 song titles of michael jackson
+MichaelJackson[c("songtitle", "Top10")]
+```
+
+You Rock My World and You Are Not Alone.
+
+####The variable corresponding to the estimated time signature (timesignature) is discrete, meaning that it only takes integer values (0, 1, 2, 3, . . . ). What are the values of this variable that occur in our dataset?
+
+```{r timesignature}
+# Tabulate time signature
+z = table(songs$timesignature)
+kable(z)
+```
+
+The only values that appear in the table for timesignature are 0, 1, 3, 4, 5, and 7
+
+#### Which timesignature value is the most frequent among songs in our dataset?
+
+```{r timesignaturemost}
+# Tabulate time signature
+z = table(songs$timesignature)
+kable(z)
+```
+
+6787 songs have a value of 4 for the timesignature.
+
+#### Out of all of the songs in our dataset, the song with the highest tempo is one of the following songs. Which one is it?
+
+```{r whichsongsmax}
+# Find the song with the highest tempo
+i = which.max(songs$tempo)
+songs$songtitle[i]
+```
+
+### Creating Our Prediction Model
+
+We wish to predict whether or not a song will make it to the Top 10. To do this, first use the subset function to split the data into a training set "SongsTrain" consisting of all the observations up to and including 2009 song releases, and a testing set "SongsTest", consisting of the 2010 song releases.
+
+#### How many observations (songs) are in the training set?
+
+```{r split the data}
+#split the data
+SongsTrain = subset(songs, year <= 2009)
+SongsTest = subset(songs, year == 2010)
+nrow(SongsTrain)
+```
+
+7201 songs are in the training set.
+
+#### Looking at the summary of your model, what is the value of the Akaike Information Criterion (AIC)?
+
+```{r predicttop10}
+# Remove the variables we wont use in our model
+nonvars = c("year", "songtitle", "artistname", "songID", "artistID")
+SongsTrain = SongsTrain[ , !(names(SongsTrain) %in% nonvars) ]
+SongsTest = SongsTest[ , !(names(SongsTest) %in% nonvars) ]
+# Build linear regression
+SongsLog1 = glm(Top10 ~ ., data=SongsTrain, family=binomial)
+summary(SongsLog1)
+```
+
+AIC = 4827.2
+
+#### Our model seems to indicate that these confidence variables are significant (rather than the variables timesignature, key and tempo themselves). What does the model suggest?
+
+If you look at the output summary(model), where model is the name of your logistic regression model, you can see that the coefficient estimates for the confidence variables (timesignature_confidence, key_confidence, and tempo_confidence) are positive. This means that higher confidence leads to a higher predicted probability of a Top 10 hit.
+
+#### What does Model 1 suggest in terms of complexity?
+
+Since the coefficient values for timesignature_confidence, tempo_confidence, and key_confidence are all positive, lower confidence leads to a lower predicted probability of a song being a hit. So mainstream listeners tend to prefer less complex songs.
+
+#### By inspecting the coefficient of the variable "loudness", what does Model 1 suggest?
+
+The coefficient estimate for loudness is positive, meaning that mainstream listeners prefer louder songs, which are those with heavier instrumentation. 
+#### By inspecting the coefficient of the variable "energy", do we draw the same conclusions as above?
+
+However, the coefficient estimate for energy is negative, meaning that mainstream listeners prefer songs that are less energetic, which are those with light instrumentation. These coefficients lead us to different conclusions!
+
+### Beware of Multicollinearity Issues! 
+
+#### What is the correlation between the variables "loudness" and "energy" in the training set?
+
+```{r collinearityen}
+# Calculate the collinearity
+cor(SongsTrain$loudness, SongsTrain$energy)
+```
+
+Correlation = 0.73991
+
+#### Create Model 2, which is Model 1 without the independent variable "loudness". Look at the summary of SongsLog2, and inspect the coefficient of the variable "energy". What do you observe?
+
+```{r logregmodel2}
+# Logistic Regression
+SongsLog2 = glm(Top10 ~ . - loudness, data=SongsTrain, family=binomial)
+# Output summary
+summary(SongsLog2)
+```
+
+The coefficient estimate for energy is positive in Model 2, suggesting that songs with higher energy levels tend to be more popular. However, note that the variable energy is not significant in this model.
+
+#### Now, create Model 3, which should be exactly like Model 1, but without the variable "energy". Do we make the same observation about the popularity of heavy instrumentation as we did with Model 2?
+
+```{r model3}
+# Logistic Regression
+SongsLog3 = glm(Top10 ~ . - energy, data=SongsTrain, family=binomial)
+# Output summary
+summary(SongsLog3)
+```
+
+Yes, we can see that loudness has a positive coefficient estimate, meaning that our model predicts that songs with heavier instrumentation tend to be more popular.
+
+### Validating our Model
+Make predictions on the test set using Model 3.
+
+#### What is the accuracy of Model 3 on the test set, using a threshold of 0.45?
+```{r testset accuracy}
+# Make predictions
+testPredict = predict(SongsLog3, newdata=SongsTest, type="response")
+# Tabulate top 10 songs vs our prediction function
+z = table(SongsTest$Top10, testPredict >= 0.45)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/sum(z)
+```
+Accuracy = 0.87936
+
+
+#### What would the accuracy of the baseline model be on the test set?
+```{r baseline}
+# Tabulate Baseline
+z = table(SongsTest$Top10)
+kable(z)
+# Compute Accuracy
+z[1]/sum(z)
+```
+Accuracy = 0.8418231
+
+#### How many songs does Model 3 correctly predict as Top 10 hits in 2010 (remember that all songs in 2010 went into our test set), using a threshold of 0.45?
+
+```{r predictotp1045}
+# Predict Top10 hits in 2010
+z = table(SongsTest$Top10, testPredict >= 0.45)
+kable(z)
+```
+
+19 songs.
+
+#### How many non-hit songs does Model 3 predict will be Top 10 hits (again, looking at the test set), using a threshold of 0.45?
+```{r predictotp1045non}
+# Predict Top10 hits in 2010
+z = table(SongsTest$Top10, testPredict >= 0.45)
+kable(z)
+```
+
+5 songs.
+
+
+#### What is the sensitivity of Model 3 on the test set, using a threshold of 0.45?
+
+```{r sensitivty}
+# Tabulate confusion matrix
+z = table(SongsTest$Top10, testPredict >= 0.45)
+kable(z)
+# Compute Sensitivity
+z[4]/(z[2]+z[4])
+```
+
+Sensitivity = 0.3220339
+
+#### What is the specificity of Model 3 on the test set, using a threshold of 0.45?
+```{r specificity}
+# Tabulate confusion matrix
+z = table(SongsTest$Top10, testPredict >= 0.45)
+kable(z)
+# Compute Specificity
+z[1]/(z[1]+z[3])
+```
+
+Specificity = 0.9840764
+
+#### What conclusions can you make about our model?
+Model 3 has a very high specificity, meaning that it favors specificity over sensitivity. While Model 3 only captures less than half of the Top 10 songs, it still can offer a competitive edge, since it is very conservative in its predictions.
+

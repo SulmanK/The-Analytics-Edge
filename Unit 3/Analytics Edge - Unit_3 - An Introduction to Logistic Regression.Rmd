@@ -1,0 +1,428 @@
+---
+title: 'Analytics Edge: Unit 3 - An Introduction to Logistic Regression'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Modeling the Expert
+
+### Ask the Experts!
+* Critical decisions are often made by people with expert knowledge
+
+* Healthcare Quality Assessment
+    + Good quality care educates patients and controls costs
+    + Need to assess quality for proper medical interventions
+    + No single set of guidelines for defining quality of healthcare
+    + Health professionals are experts in quality of care assessment
+    
+### Replicating Expert Assessment
+* Can we develop analytical tools that replicate expert assessment on a large scale?
+* Learn from expert human judgement
+    + Develop a model, interpret results, and adjust the model
+    + Make predictions/evaluations on a large scale
+    + Let's identify poor healthcare quality using analytics
+
+### Claims Data
+* Electronically available
+* Standardized
+* Not 100% accurate
+* Under-reporting is common
+* Claims for hospital visits can be vague
+
+
+### Creating the Dataset
+
+#### Claims Samples
+* Large health insurance claims database
+* Randomly selected 131 diabetes patients
+* Ages range from 35 to 55
+* Cost $10,000 - $20,000
+
+#### Expert Review
+* Expert physician reviewed claims and wrote descriptive notes.
+
+#### Expert Assessment
+* Rated quality on a two-point scale (poor/good)
+
+#### Variable Extraction
+* Dependent Variable
+    + Quality of care
+
+* Independent Variables
+    + Ongoing use of **narcotics**
+    + **only on Avandia**, not a good first choice drug
+    + Had **regular visits, mammogram, and immunizations**
+    + Was given **home testing supplies**
+    + Diabetes treatment
+    + Patient demographics
+    + Healthcare utilization
+    + Providers
+    + Claims
+    + Prescriptions
+
+### Predicting Quality of Care
+* The dependent variable is modeled as a binary variable
+    + 1 if low-quality case, 0 if high-quality care
+
+* This is a *categorical variable*
+    + A small number of possible outcomes
+
+* Linear regression would predict a continuous outcome
+
+### Logistic Regression
+* Predicts the probability of poor care
+    + Denote the dependent variable "PoorCare" by y
+    + $$P(y = 1)$$
+* Then $$P(y = 0) = 1 - P(y = 1)$$
+* Independent variables $$x_1, x_2, ..., x_k$$
+* Uses the Logistic Response Function
+$$P(y = 1) = \frac{1}{1 + e^{-(\beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k)}}$$
+
+
+### Understanding the Logistic Function
+<center>
+
+![](log.png)
+
+</center>
+
+* Positive values are predictive of class 1
+* Negative values are predictive of class 0
+* The coefficients are selected to
+    + Predict a high probability for the poor care cases
+    + Predict a low probability for the good care cases
+
+* We can talk about Odds (like in gambling)
+$$Odds = \frac{P(y = 1)}{P(y = 0)}$$
+
+* Odds > 1 if y = 1 is more likely
+* Odds < 1 if y = 0 is more likely
+
+### The Logit
+
+$$Odds = e^{\beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k}$$
+$$log(Odds) = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + ... + \beta_k x_k$$
+
+* This is called the "Logit" and looks like linear regression
+* The bigger the Logit, the bigger P(y = 1)
+
+### Model for Healthcare Quality
+
+<center>
+
+![](modle.png)
+
+</center>
+
+* Plot of the independent variables
+    + Number of Office Visits
+    + Number of Narcotics Prescribed
+
+* Red are poor care
+* Green are good care
+
+### Threshold Value
+* The outcome of a logistic regression model is a probability
+
+* Often, we want to make a binary prediction
+    + Did this patient receive poor care or good care?
+
+* We can do this by using a *threshold vlaue* t
+
+* If P(PoorCare = 1) \geq t, predict poor quality
+* If P(PoorCare = 1) < t, predict good quality
+
+* How do we select the value of t?
+
+* Often selected based on which errors are "better"
+
+* If t is **large**, predict poor rarely (when P(y = 1) is large)
+    + More errors when we say good care, but it is actually poor care
+    + Detects patients who are receiving the worst care
+
+* If t is **small**, predict good care rarely (when P(y = 1) is small)
+    + More errors where we say poor care, but it is actually good care
+    + Detects all patients who might be receiving poor care
+
+* With no preference between the errors, select t = 0.85
+    + Predicts the more likely outcome
+
+### Selecting a Threshold Value
+* Compare actual outcomes to predicted outcomes using *a confusion matrix (classification matrix)*
+
+<center>
+
+![](confusionmatrix.png)
+
+</center>
+
+### Receiver Operator Characteristic (ROC) Curve
+
+<center>
+
+![](roc.png)
+
+</center>
+
+* True positive rate (sensitive) on y-axis
+    + Proportion of poor care caught
+
+* False Positive rate (specificity) on x-axis
+    + Proportion of good care labeled as poor care
+
+### Selecting a Threshold using ROC
+
+* Captures all thresholds simultaneously
+
+* High Threshold
+    + High specificity
+    + Low sensitivity
+
+* Low Threshold
+    + Low specificity
+    + High sensitivity
+
+* Choose **best threshold** for best **best trade off** 
+    + **cost of failing to detect positives**
+    + **costs of raising false alarms**
+
+<center>
+
+![](roc1.png)
+
+</center>
+
+<center>
+
+![](roc2.png)
+
+</center>
+
+<center>
+
+![](roc3.png)
+
+</center>
+
+
+### Intepreting the Model
+* Multicollinearity could be a problem
+    + Do the coefficients make sense
+    + Check correlations
+
+* Measures of accuracy
+
+### Compute Outcome Measures
+
+<center>
+
+![](confusionmatrix.png)
+
+</center>
+
+N = number of observations
+
+$$Overall Accuracy = \frac{TN + TP}{N}$$
+
+$$Sensitivity = \frac{TP}{TP + FN}$$
+
+$$Specificity = \frac{TN}{TN + FP}$$
+
+$$Overall Error Rate = \frac{FP + FN}{N}$$
+
+$$False Negative Error Rate = \frac{FN}{TP + FN}$$
+
+$$False Positive Error Rate = \frac{FP}{TN + FP}$$
+
+### Making Predictions
+
+* Just like in linear regression, we want to make predictions on a test set to compute out-of-sample metrics
+  
+> predictTest = predict(QualityLog, type = "response", newdata = qualityTest)
+  
+* This makes predictions for probabilities
+
+* If we use a threshold value of 0.3, we get the following confusion matrix
+
+<center>
+
+![](point3.png)
+
+</center>
+
+### Area Under the ROC Curve (AUC)
+
+<center>
+
+![](aauc.png)
+
+</center>
+
+* Just take the area under the curve
+
+* Interpretation
+    * Given a random positive and negative proportion of the time you guess which is correct
+
+* Less affected by sample balance than accuracy
+
+<center>
+
+![](aaucmax.png)
+
+</center>
+
+* What is a good AUC?
+    + Maximum of 1 (perfect prediction)
+
+* What is a bad AUC?
+    + Minimum of 0.5 (just guessing)
+    
+
+### Conclusions
+
+* An expert-trained model can accurately identify diabetics receiving low-quality care
+    + Out-of-sample accuracy of 78%
+    + Identifies most patients receiving poor care
+
+* In practice, the probabilities returned by the logistic regression model can be used to prioritize patients for intervention
+
+* Electronic medical records could be used in the future
+
+### The Competitive Edge of Models
+
+* While humans can accurately analyze small amounts of information, models allow large scalability
+
+* Models do not replace expert judgement
+    + Experts can improve and refine the model
+
+* Models can integrate assessments of many experts into one final unbiased and unemotional prediction.
+
+## Modeling the Expert in R
+
+
+### Read in dataset
+```{r readdataset}
+# Read in the dataset
+quality = read.csv("quality.csv")
+```
+
+
+### Look at structure
+```{r look at the structure}
+# Output structure
+str(quality)
+```
+
+### Table outcome
+```{r table}
+# Tabulate the amount of poor care in the dataset
+z = table(quality$PoorCare)
+kable(z)
+# Baseline accuracy
+98/131
+```
+
+### Load caTools package
+```{r instalload}
+# Install the caTools to split the training and testing set
+library(caTools)
+
+# Randomly split data
+set.seed(88)
+split = sample.split(quality$PoorCare, SplitRatio = 0.75)
+split
+
+# Create training and testing sets
+qualityTrain = subset(quality, split == TRUE)
+qualityTest = subset(quality, split == FALSE)
+```
+
+### Logistic Regression
+```{r logmodel}
+# Logistic Regression Model
+QualityLog = glm(PoorCare ~ OfficeVisits + Narcotics, data=qualityTrain, family=binomial)
+summary(QualityLog)
+```
+
+### Make Predictions
+```{r make predictions}
+# Make predictions on training set
+predictTrain = predict(QualityLog, type="response")
+```
+
+### Analyze the predictions
+```{r apredictions}
+# Analyze predictions
+summary(predictTrain)
+z = tapply(predictTrain, qualityTrain$PoorCare, mean)
+kable(z)
+```
+
+
+### Confusion matrix
+```{r cm}
+# Confusion matrix for threshold of 0.5
+z = table(qualityTrain$PoorCare, predictTrain > 0.5)
+kable(z)
+
+# Sensitivity and specificity
+10/25
+70/74
+
+# Confusion matrix for threshold of 0.7
+z = table(qualityTrain$PoorCare, predictTrain > 0.7)
+kable(z)
+
+# Sensitivity and specificity
+8/25
+73/74
+
+# Confusion matrix for threshold of 0.2
+z = table(qualityTrain$PoorCare, predictTrain > 0.2)
+kable(z)
+# Sensitivity and specificity
+16/25
+54/74
+```
+
+
+
+### ROCR Curve
+```{r loadrocr}
+# Load ROCR package
+library(ROCR)
+
+# Prediction function
+ROCRpred = prediction(predictTrain, qualityTrain$PoorCare)
+
+# Performance function
+ROCRperf = performance(ROCRpred, "tpr", "fpr")
+
+# Plot ROC curve
+plot(ROCRperf)
+
+# Add colors
+plot(ROCRperf, colorize=TRUE)
+
+# Add threshold labels 
+plot(ROCRperf, colorize=TRUE, print.cutoffs.at=seq(0,1,by=0.1), text.adj=c(-0.2,1.7))
+```

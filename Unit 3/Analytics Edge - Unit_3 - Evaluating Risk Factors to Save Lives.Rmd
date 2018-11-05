@@ -1,0 +1,253 @@
+---
+title: 'Analytics Edge: Unit 3 - Evaluating Risk Factors to Save Lives '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## The Framingham Heart Study
+
+### Franklin Delano Roosevelt (FDR)
+
+* President of the United States, 1933 - 1945
+    + Longest-serving president
+    + Led country through Great Depression
+    + Commander in Chief of US military in World War II
+
+* Died while president, April 12, 1945
+
+### FDR's Blood Pressure
+
+* Before presidency, blood pressure of 140/100
+    + Healthy blood pressure is less than 120/80
+    + Today, this is already considered high blood pressure
+
+* One year before death, 210/120
+    + Today, this is called Hypertensive Crisis, and emergency care is needed
+    + FDR's personal physician: 
+    "A moderate degree of arteriosclerosis, although no more than normal for a man of his age"
+* Two months before death: 260/150
+* Day of death: 300/190
+
+### Early Misconceptions
+* High blood pressure dubbed *essential hypertension*
+    + Considered important to force blood through arteries
+    + Considered harmful to lower blood pressure
+* Today, presidential blood pressure numbers like FDR's would send the country's leading doctors racing down hallways ... whisking the nation's leader into cardiac care unit of Bethesda Naval Hospital."
+" - Daniel Levy, Framingham Heart Study Director
+
+### How Did We Learn?
+* In late 1940s, U.S. Government set out to better understand cardiovascular disease (CVD)
+* Plan: track large cohort of initially health patients over time
+* City of Framingham, MA selected as site for study
+    + Appropriate size
+    + Stable population
+    + Cooperative doctors and residents
+* 1948: beginning of Framingham Heart Study
+
+### The Framingham Heart Study
+* 5,209 patients aged 30-59 enrolled
+* Patients given questionnaire and exams every 2 years
+    + Physical characteristics
+    + Behavioral characteristics
+    + Test results
+* Exams and questions expanded over time
+* We will build models using the Framingham data to predict and prevent heart disease
+
+### Analytics to Prevent Heart Disease
+
+<center>
+
+![](atphd.png)
+
+</center>
+
+### Coronary Heart Disease (CHD)
+
+* We will predict 10-year risk of CHD
+    + Subject of important 1998 paper, introducing the Framingham Risk Score
+
+* CHD is a disease of the blood vessels supplying the heart
+
+* Heart disease has been leading the cause of death worldwide since 1921
+      + 7.3 million people died from CHD in 2008
+      + Since 1950, age-adjusted death rates have declined 60%
+      
+### Risk Factors
+
+* *Risk factors* are variables that increase the chances of a disease
+
+* Term coined by William Kannel and Roy Dawber from the Framing Ham Heart Study
+
+* Key to successful prediction of CHD: identifying important risk factors
+
+### Hypothesized CHD Risk Factors
+
+* We will investigate risk factors collected in the first data collection for the study
+    * Anonymized version of original data
+
+* Demographic risk factors
+      + *male*: sex of patient
+      + *age*: age in years at first examination
+      + *education*: Some high school (1), high school/GED (2), some college/vocation school (3), college(4)
+      
+### An Analytical Approach
+
+* Randomly split patients into training and testing sets
+
+* Use logistic regression on training set to predict whether or not a patient experienced CHD within 10 years of first examination
+
+* Evaluate predictive power on test set
+
+### Model Strength
+
+* Model rarely predicts 10-year CHD risk above 50%
+    + Accuracy very near a baseline of always predicting no CHD
+
+* Model can differentiate low-risk from high-risk patients (AUC = 0.74)
+
+* Some significant variable suggest interventions
+    + Smoking
+    + Cholesterol
+    + Systolic blood pressure
+    + Glucose
+    
+### Risk Model Validation
+
+* So far, we have used *internal validation*
+    + Train with some patients, test with others
+
+* Weakness: unclear if model generalizes to other populations
+
+* Framingham color white, middle class
+
+* Important to test on other populations
+
+### Framingham Risk Model Validation
+* Framingham Risk Model tested on diverse cohorts
+
+<center>
+
+![](frm.png)
+
+</center>
+
+* Cohort studies collecting same risk factors
+* Validation Plan
+      + Predict CHD risk for each patient using FHS model
+      + Compare to actual outcomes for each docile
+      
+
+### Drugs to Lower Blood Pressure
+
+* In FDR's time, hypertension drugs too toxic for practical use
+* In 1950s, the diuretic chlorothiazied was developed
+* Framingham Heart Study gave Ed Freis the evidence needed to argue for testing effects of BP drugs
+* Veterans Administration (VA) Trial: randomized, double blind clinical trial
+* Found decreased risk of CHD
+* Now, >$1B market for diuretics worldwide
+
+### Drugs to Lower Cholesterol
+* Despite Framingham results, early cholesterol drugs too toxic for practical use
+* In 1970s, first statins were developed
+* Study of 4,444 patients with CHD: status cause 37% risk reduction of second heart attack
+* Study of 6,595 men with high cholesterol: statins cause 32% risk reduction of CVD deaths
+* Now, > $20B market for statins worldwide
+
+### Research Directions and Challenges
+* Second generation enrolled in 1971, third in 2002
+    + Enables study of family history as a risk factor
+
+* More diverse cohorts begun in 1994 and 2003
+
+* Social network analysis of participants
+
+* Genome-wide association study linking studying genetics as risk factors
+
+* Many challenges related to funding
+    + Funding cuts in 1969 nearly closed study
+    + 2013 sequester threatening to close study
+    
+### Clinical Decision Rules
+* Paved the way for *clinical decision rules*
+* Predict clinical outcomes with data
+      + Patient and disease characteristics
+      + Test results
+* More than 75,000 published across medicine
+* Rate increasing
+
+## Framingham Heart Study in R
+
+### Load in the dataset
+```{r load dataset}
+# Read in the dataset
+framingham = read.csv("framingham.csv")
+```
+
+### Examine structure
+```{r structure}
+# Look at structure
+str(framingham)
+```
+
+### Split the dataset
+```{r split}
+# Load the library caTools
+library(caTools)
+
+# Randomly split the data into training and testing sets
+set.seed(1000)
+split = sample.split(framingham$TenYearCHD, SplitRatio = 0.65)
+
+# Split up the data using subset
+train = subset(framingham, split==TRUE)
+test = subset(framingham, split==FALSE)
+```
+
+### Logistic Regression
+```{r logistic}
+# Logistic Regression Model
+framinghamLog = glm(TenYearCHD ~ ., data = train, family=binomial)
+summary(framinghamLog)
+```
+### Make Predictions
+```{r makep}
+# Predictions on the test set
+predictTest = predict(framinghamLog, type="response", newdata=test)
+
+# Confusion matrix with threshold of 0.5
+z = table(test$TenYearCHD, predictTest > 0.5)
+kable(z)
+
+# Accuracy
+(1069+11)/(1069+6+187+11)
+
+# Baseline accuracy
+(1069+6)/(1069+6+187+11) 
+```
+
+### AUC
+```{r rorcrauc}
+# Test set AUC 
+library(ROCR)
+ROCRpred = prediction(predictTest, test$TenYearCHD)
+as.numeric(performance(ROCRpred, "auc")@y.values)
+```
