@@ -40,6 +40,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 6 : Market Segmentation for Airlines](http://rpubs.com/SulmanKhan/435961)
     * [Unit 6 : Predicting Stock Returns with Cluster-Then-Predict](http://rpubs.com/SulmanKhan/435978)
 * [Unit 7 : An Introduction to Visualization](http://rpubs.com/SulmanKhan/437458) 
+    * [Unit 7 : Visualization for Law and Order](http://rpubs.com/SulmanKhan/437502)
 
 
   
