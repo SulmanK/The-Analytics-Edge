@@ -42,7 +42,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
 * [Unit 7 : An Introduction to Visualization](http://rpubs.com/SulmanKhan/437458) 
     * [Unit 7 : Visualization for Law and Order](http://rpubs.com/SulmanKhan/437502)
     * [Unit 7 : The Good, the Bad, and the Ugly](http://rpubs.com/SulmanKhan/437520)
-    * [Unit 7 : Election Forecast Revisted](http://rpubs.com/SulmanKhan/437545)
+    * [Unit 7 : Election Forecast Revisted](http://rpubs.com/SulmanKhan/437547)
   
 -Sulman Khan
 
