@@ -1,0 +1,200 @@
+---
+title: 'Analytics Edge: Unit 4 - Letter Recognition '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Letter Recognition
+
+### Background Information on the Dataset
+
+One of the earliest applications of the predictive analytics methods we have studied so far in this class was to automatically recognize letters, which post office machines use to sort mail. In this problem, we will build a model that uses statistics of images of four letters in the Roman alphabet -- A, B, P, and R -- to predict which letter a particular image corresponds to.
+
+Note that this is a multiclass classification problem. We have mostly focused on binary classification problems (e.g., predicting whether an individual voted or not, whether the Supreme Court will affirm or reverse a case, whether or not a person is at risk for a certain disease, etc.). In this problem, we have more than two classifications that are possible for each observation, like in the D2Hawkeye lecture. 
+
+The file letters_ABPR.csv contains 3116 observations, each of which corresponds to a certain image of one of the four letters A, B, P and R. The images came from 20 different fonts, which were then randomly distorted to produce the final images; each such distorted image is represented as a collection of pixels, each of which is "on" or "off". For each such distorted image, we have available certain statistics of the image in terms of these pixels, as well as which of the four letters the image is. This data comes from the UCI Machine Learning Repository.
+
+This dataset contains the following 17 variables:
+
+*    *letter* = the letter that the image corresponds to (A, B, P or R)
+*    *xbox* = the horizontal position of where the smallest box covering the letter shape begins.
+*    *ybox* = the vertical position of where the smallest box covering the letter shape begins.
+*    *width* = the width of this smallest box.
+*    *height* = the height of this smallest box.
+*    *onpix* = the total number of "on" pixels in the character image
+*    *xbar* = the mean horizontal position of all of the "on" pixels
+*    *ybar* = the mean vertical position of all of the "on" pixels
+*    *x2bar* = the mean squared horizontal position of all of the "on" pixels in the image
+*    *y2bar* = the mean squared vertical position of all of the "on" pixels in the image
+*    *xybar* = the mean of the product of the horizontal and vertical position of all of the "on" pixels in the image
+*    *x2ybar* = the mean of the product of the squared horizontal position and the vertical position of all of the "on" pixels
+*    *xy2bar* = the mean of the product of the horizontal position and the squared vertical position of all of the "on" pixels
+*    *xedge* = the mean number of edges (the number of times an "off" pixel is followed by an "on" pixel, or the image boundary is hit) as the image is scanned from left to right, along the whole vertical length of the image
+*    *xedgeycor* = the mean of the product of the number of horizontal edges at each vertical position and the vertical position
+*    *yedge* = the mean number of edges as the images is scanned from top to bottom, along the whole horizontal length of the image
+*    *yedgexcor* = the mean of the product of the number of vertical edges at each horizontal position and the horizontal position
+
+
+### Predicting B or not B 
+
+Let's warm up by attempting to predict just whether a letter is B or not. To begin, load the file letters_ABPR.csv into R, and call it letters. Then, create a new variable isB in the dataframe, which takes the value "TRUE" if the observation corresponds to the letter B, and "FALSE" if it does not. You can do this by typing the following command into your R console:
+
+```{r loaddata}
+# Load data
+letters = read.csv("letters_ABPR.csv")
+# Convert to factor
+letters$isB = as.factor(letters$letter == "B")
+```
+
+Now split the data set into a training and testing set, putting 50% of the data in the training set. Set the seed to 1000 before making the split. The first argument to sample.split should be the dependent variable "letters$isB". Remember that TRUE values from sample.split should go in the training set.
+
+```{r splitdata}
+# Split the data
+set.seed(1000)
+spl = sample.split(letters$isB, SplitRatio = 0.5)
+train = subset(letters, spl == TRUE)
+test = subset(letters, spl == FALSE)
+```
+
+#### Before building models, let's consider a baseline method that always predicts the most frequent outcome, which is "not B". What is the accuracy of this baseline method on the test set?
+
+```{r baselineaccuracy}
+# Tabulate if not B
+z = table(test$isB)
+kable(z)
+# Compute Accuracy
+z[1]/sum(z)
+```
+
+Accuracy = 0.754172
+
+#### What is the accuracy of the CART model on the test set?
+
+Now build a classification tree to predict whether a letter is a B or not, using the training set to build your model. Remember to remove the variable "letter" out of the model, as this is related to what we are trying to predict! To just remove one variable, you can either write out the other variables, or remember what we did in the Billboards problem in Week 3, and use the following notation:
+
+```{r cartb}
+# Cart Model
+CARTb = rpart(isB ~ . - letter, data=train, method="class")
+# Make predictions
+predictions = predict(CARTb, newdata=test, type="class")
+# Confusion matrix
+z = table(test$isB, predictions)
+kable(z)
+# Compute Accuracy
+sum(diag(z))/(sum(z))
+```
+
+Accuracy = 0.9358151
+
+#### What is the accuracy of the Random Forest (RF) model on the test set?
+
+Now, build a random forest model to predict whether the letter is a B or not (the isB variable) using the training set. You should use all of the other variables as independent variables, except letter (since it helped us define what we are trying to predict!). Use the default settings for ntree and nodesize (don't include these arguments at all). Right before building the model, set the seed to 1000. (NOTE: You might get a slightly different answer on this problem, even if you set the random seed. This has to do with your operating system and the implementation of the random forest algorithm.)
+
+```{r rf1}
+# Random Forest model
+set.seed(1000)
+RFb = randomForest(isB ~ . - letter, data=train) 
+# Make predictions
+predictions = predict(RFb, newdata=test)
+# Confusion matrix
+z = table(test$isB, predictions)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.9878049
+
+### Predicting the letters A, B, P, R 
+
+Let us now move on to the problem that we were originally interested in, which is to predict whether or not a letter is one of the four letters A, B, P or R.
+
+As we saw in the D2Hawkeye lecture, building a multiclass classification CART model in R is no harder than building the models for binary classification problems. Fortunately, building a random forest model is just as easy.
+
+The variable in our data frame which we will be trying to predict is "letter". Start by converting letter in the original data set (letters) to a factor by running the following command in R:
+
+```{r convertfactorsano}
+# Convert to factor
+letters$letter = as.factor( letters$letter ) 
+```
+
+Now, generate new training and testing sets of the letters data frame using letters$letter as the first input to the sample.split function. Before splitting, set your seed to 2000. Again put 50% of the data in the training set. (Why do we need to split the data again? Remember that sample.split balances the outcome variable in the training and testing sets. With a new outcome variable, we want to re-generate our split.)
+
+```{r splitdata2}
+# Split the data
+set.seed(2000)
+
+spl = sample.split(letters$letter, SplitRatio = 0.5)
+
+train2 = subset(letters, spl == TRUE)
+
+test2 = subset(letters, spl == FALSE)
+```
+
+#### What is the baseline accuracy on the testing set?
+
+```{r baselineacc}
+# Tabulate letters
+z = table(test2$letter)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.2573813
+
+#### What is the test set accuracy of your CART model? Use the argument type="class" when making predictions.
+
+Now build a classification tree to predict "letter", using the training set to build your model. You should use all of the other variables as independent variables, except "isB", since it is related to what we are trying to predict! Just use the default parameters in your CART model. Add the argument method="class" since this is a classification problem. Even though we have multiple classes here, nothing changes in how we build the model from the binary case. 
+
+```{r cartmodel2s}
+# CART Model
+CARTletter = rpart(letter ~ . - isB, data=train2, method="class")
+# Make predictions
+predictLetter = predict(CARTletter, newdata=test2, type="class")
+# Confusion Matrix
+z = table(test2$letter, predictLetter)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.8786906
+
+#### What is the test set accuracy of your random forest model? 
+
+Now build a random forest model on the training data, using the same independent variables as in the previous problem -- again, don't forget to remove the isB variable. Just use the default parameter values for ntree and nodesize (you don't need to include these arguments at all). Set the seed to 1000 right before building your model. (Remember that you might get a slightly different result even if you set the random seed.)
+
+```{r rfmodel23}
+# Random Forest model
+set.seed(1000)
+RFletter = randomForest(letter ~ . - isB, data=train2)
+# Make predictions
+predictLetter = predict(RFletter, newdata=test2)
+# Confusion matrix
+z = table(test2$letter, predictLetter)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.9801027

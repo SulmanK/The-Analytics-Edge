@@ -1,0 +1,270 @@
+---
+title: 'Analytics Edge: Unit 4 - Understanding Why People Vote '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Understanding Why People Vote
+
+### Background Information on the Dataset
+
+In August 2006 three researchers (Alan Gerber and Donald Green of Yale University, and Christopher Larimer of the University of Northern Iowa) carried out a large scale field experiment in Michigan, USA to test the hypothesis that one of the reasons people vote is social, or extrinsic, pressure. To quote the first paragraph of their 2008 research paper:
+
+    Among the most striking features of a democratic political system is the participation of millions of voters in elections. Why do large numbers of people vote, despite the fact that ... "the casting of a single vote is of no significance where there is a multitude of electors"? One hypothesis is adherence to social norms. Voting is widely regarded as a citizen duty, and citizens worry that others will think less of them if they fail to participate in elections. Voters' sense of civic duty has long been a leading explanation of vote turnout...
+
+In this homework problem we will use both logistic regression and classification trees to analyze the data they collected.
+The data
+
+The researchers grouped about 344,000 voters into different groups randomly - about 191,000 voters were a "control" group, and the rest were categorized into one of four "treatment" groups. These five groups correspond to five binary variables in the dataset.
+
+    "Civic Duty" (variable **civicduty**) group members were sent a letter that simply said "DO YOUR CIVIC DUTY - VOTE!"
+    "Hawthorne Effect" (variable **hawthorne**) group members were sent a letter that had the "Civic Duty" message plus the additional message "YOU ARE BEING STUDIED" and they were informed that their voting behavior would be examined by means of public records.
+    "Self" (variable **self**) group members received the "Civic Duty" message as well as the recent voting record of everyone in that household and a message stating that another message would be sent after the election with updated records.
+    "Neighbors" (variable **neighbors**) group members were given the same message as that for the "Self" group, except the message not only had the household voting records but also that of neighbors - maximizing social pressure.
+    "Control" (variable **control**) group members were not sent anything, and represented the typical voting situation.
+
+Additional variables include **sex** (0 for male, 1 for female), **yob** (year of birth), and the dependent variable **voting** (1 if they voted, 0 otherwise).
+
+### Exploration and Logistic Regression
+
+We will first get familiar with the data. Load the CSV file gerber.csv into R.
+
+```{r loadata}
+# Load dataset
+gerber = read.csv("gerber.csv")
+```
+
+#### What proportion of people in this dataset voted in this election?
+
+```{r}
+# Proportion of people who voted
+z = table(gerber$voting)
+kable(z)
+# Compute proportion
+z[2]/sum(z)
+```
+Proportion = 0.3159
+
+#### Which of the four "treatment groups" had the largest percentage of people who actually voted (voting = 1)?
+
+```{r treatmentvote}
+# Tabulate voting across all treatment groups
+z = table(gerber$voting, gerber$hawthorne)
+kable(z)
+sum(diag(z))/sum(z)
+z = table(gerber$voting, gerber$civicduty)
+kable(z)
+sum(diag(z))/sum(z)
+z = table(gerber$voting, gerber$neighbors)
+kable(z)
+sum(diag(z))/sum(z)
+z = table(gerber$voting, gerber$self)
+kable(z)
+sum(diag(z))/sum(z)
+```
+
+The neighbors group had the highest population of people voting
+
+#### Build a logistic regression model for voting using the four treatment group variables as the independent variables (civicduty, hawthorne, self, and neighbors). 
+
+```{r build logisticreg}
+# Logistic Regression
+LogModel = glm(voting ~ civicduty + hawthorne + self + neighbors, data=gerber, family="binomial")
+```
+
+
+##### Which of the following coefficients are significant in the logistic regression model?
+```{r logsummary}
+# Output summary
+summary(LogModel)
+```
+
+Civic Duty, Hawthorne Effect, Self, and Neighbors are significant.
+
+##### Using a threshold of 0.3, what is the accuracy of the logistic regression model? 
+```{r makepredictionslog}
+# Make predictions
+predictLog = predict(LogModel, type="response")
+z = table(gerber$voting, predictLog > 0.3)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.542
+
+##### Using a threshold of 0.5, what is the accuracy of the logistic regression model?
+```{r makepredictionslog5}
+# Make predictions
+predictLog = predict(LogModel, type="response")
+z = table(gerber$voting, predictLog > 0.5)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.684
+
+##### Compare your previous two answers to the percentage of people who did not vote (the baseline accuracy) and compute the AUC of the model. What is happening here?
+
+```{r auc}
+# Compute AUC
+library(ROCR)
+
+ROCRpred = prediction(predictLog, gerber$voting)
+
+as.numeric(performance(ROCRpred, "auc")@y.values)
+```
+
+Even though all of our variables are significant, our model does not improve over the baseline model of just predicting that someone will not vote, and the AUC is low. So while the treatment groups do make a difference, this is a weak predictive model.
+
+### Trees
+
+We will now try out trees. Build a CART tree for voting using all data and the same four treatment variables we used before. Don't set the option method="class" - we are actually going to create a regression tree here. We are interested in building a tree to explore the fraction of people who vote, or the probability of voting. We'd like CART to split our groups if they have different probabilities of voting. If we used method='class', CART would only split if one of the groups had a probability of voting above 50% and the other had a probability of voting less than 50% (since the predicted outcomes would be different). However, with regression trees, CART will split even if both groups have probability less than 50%.
+
+```{r CART1}
+# CART Model
+CARTmodel = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gerber)
+```
+
+#### Plot the tree. What happens, and if relevant, why?
+```{r plotcart}
+# Plot Tree
+prp(CARTmodel)
+```
+
+There are no splits in the tree, because none of the variables make a big enough effect to be split on.
+
+### CART Model 2
+
+```{r cartmodel2}
+# CART Model
+CARTmodel2 = rpart(voting ~ civicduty + hawthorne + self + neighbors, data=gerber, cp=0.0)
+```
+
+#### What do you observe about the order of the splits?
+```{r cartmodel2plot}
+# Plot Tree
+prp(CARTmodel2)
+```
+
+We saw in Problem 1 that the highest fraction of voters was in the Neighbors group, followed by the Self group, followed by the Hawthorne group, and lastly the Civic Duty group. And we see here that the tree detects this trend.
+
+#### Using only the CART tree plot, determine what fraction (a number between 0 and 1) of "Civic Duty" people voted:
+
+You can find this answer by reading the tree - the people in the civic duty group correspond to the bottom right split, which has value 0.31 in the leaf.
+
+### CART Model 3
+
+```{r cartmodel3}
+# CART Model3
+CARTmodel3 = rpart(voting ~ civicduty + hawthorne + self + neighbors + sex, data=gerber, cp=0.0)
+# Plot tree
+prp(CARTmodel3)
+```
+
+#### In the control group, which gender is more likely to vote?
+
+For the control group, which corresponds to the bottom left, sex = 0 (male) corresponds to a higher voting percentage.
+
+#### In the "Civic Duty" group, which gender is more likely to vote?
+
+For the civic duty group, which corresponds to the bottom right, sex = 0 (male) corresponds to a higher voting percentage.
+
+### Interaction Terms
+
+We know trees can handle "nonlinear" relationships, e.g. "in the 'Civic Duty' group and female", but as we will see in the next few questions, it is possible to do the same for logistic regression. First, let's explore what trees can tell us some more.
+
+Let's just focus on the "Control" treatment group. Create a regression tree using just the "control" variable, then create another tree with the "control" and "sex" variables, both with cp=0.0.
+
+```{r controltree}
+# CART Control
+CARTcontrol = rpart(voting ~ control, data=gerber, cp=0.0)
+CARTsex = rpart(voting ~ control + sex, data=gerber, cp=0.0)
+# Plot tree
+prp(CARTcontrol, digits=6)
+```
+
+#### In the "control" only tree, what is the absolute value of the difference in the predicted probability of voting between being in the control group versus being in a different group?
+
+The split says that if control = 1, predict 0.296638, and if control = 0, predict 0.34. The absolute difference between these is 0.043362.
+
+#### Now, using the second tree (with control and sex), determine who is affected more by NOT being in the control group (being in any of the four treatment groups):
+
+```{r secondtree}
+# Plot Tree
+prp(CARTsex, digits=6)
+```
+
+The first split says that if control = 1, go left. Then, if sex = 1 (female) predict 0.290456, and if sex = 0 (male) predict 0.302795. On the other side of the tree, where control = 0, if sex = 1 (female) predict 0.334176, and if sex = 0 (male) predict 0.345818. So for women, not being in the control group increases the fraction voting by 0.04372. For men, not being in the control group increases the fraction voting by 0.04302. So men and women are affected about the same. 
+
+#### Going back to logistic regression now, create a model using "sex" and "control". Interpret the coefficient for "sex":
+
+```{r logisticregreesiommodeback}
+# Logistic Regression
+LogModelSex = glm(voting ~ control + sex, data=gerber, family="binomial")
+# Output summary
+summary(LogModelSex)
+```
+
+If you look at the summary of the model, you can see that the coefficient for the "sex" variable is -0.055791. This means that women are less likely to vote, since women have a larger value in the sex variable, and a negative coefficient means that larger values are predictive of 0.
+
+#### What is the absolute difference between the tree and the logistic regression for the (Woman, Control) case?
+
+The regression tree calculated the percentage voting exactly for every one of the four possibilities (Man, Not Control), (Man, Control), (Woman, Not Control), (Woman, Control). However, logistic regression on the "sex" and "control" variables considers these variables separately, not jointly, and therefore did not do as well.
+
+We can quantify this precisely. Create the following dataframe (this contains all of the possible values of sex and control), and evaluate your logistic regression using the predict function (where "LogModelSex" is the name of your logistic regression model that uses both control and sex):
+
+```{r controlnotcontrol}
+# Predict
+Possibilities = data.frame(sex=c(0,0,1,1),control=c(0,1,0,1))
+predict(LogModelSex, newdata=Possibilities, type="response")
+prp(CARTsex)
+```
+
+The CART tree predicts 0.290456 for the (Woman, Control) case, and the logistic regression model predicts 0.2908065. So the absolute difference, to five decimal places, is 0.00035.
+
+#### How do you interpret the coefficient for the new variable in isolation? That is, how does it relate to the dependent variable?
+
+So the difference is not too big for this dataset, but it is there. We're going to add a new term to our logistic regression now, that is the combination of the "sex" and "control" variables - so if this new variable is 1, that means the person is a woman AND in the control group. We can do that with the following command:
+
+```{r logmodel2cenorcontrol}
+# Logistic Regression
+LogModel2 = glm(voting ~ sex + control + sex:control, data=gerber, family="binomial")
+# Output summary
+summary(LogModel2)
+```
+
+This coefficient is negative, so that means that a value of 1 in this variable decreases the chance of voting. This variable will have variable 1 if the person is a woman and in the control group.
+
+#### Now what is the difference between the logistic regression model and the CART model for the (Woman, Control) case?
+
+```{r predictionslogmodel2}
+# Make predictions
+predict(LogModel2, newdata=Possibilities, type="response")
+```
+
+The logistic regression model now predicts 0.2904558 for the (Woman, Control) case, so there is now a very small difference (practically zero) between CART and logistic regression.
+
+#### Should we always include all possible interaction terms of the independent variables when building a logistic regression model?
+
+We should not use all possible interaction terms in a logistic regression model due to overfitting. Even in this simple problem, we have four treatment groups and two values for sex. If we have an interaction term for every treatment variable with sex, we will double the number of variables. In smaller data sets, this could quickly lead to overfitting.

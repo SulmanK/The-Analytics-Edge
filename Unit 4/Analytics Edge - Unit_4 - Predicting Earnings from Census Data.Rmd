@@ -1,0 +1,289 @@
+---
+title: 'Analytics Edge: Unit 4 - Predicting Earnings from Census Data '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Letter Recognition
+
+### Background Information on the Dataset
+The United States government periodically collects demographic information by conducting a census.
+
+In this problem, we are going to use census information about an individual to predict how much a person earns -- in particular, whether the person earns more than $50,000 per year. This data comes from the UCI Machine Learning Repository.
+
+The file census.csv contains 1994 census data for 31,978 individuals in the United States.
+
+The dataset includes the following 13 variables:
+
+* *age* = the age of the individual in years
+*    *workclass* = the classification of the individual's working status (does the person work for the federal government, work for the local government, work without pay, and so on)
+*    *education* = the level of education of the individual (e.g., 5th-6th grade, high school graduate, PhD, so on)
+*    *maritalstatus* = the marital status of the individual
+*    *occupation* = the type of work the individual does (e.g., administrative/clerical work, farming/fishing, sales and so on)
+*    *relationship* = relationship of individual to his/her household
+*    *race* = the individual's race
+*    *sex* = the individual's sex
+*    *capitalgain* = the capital gains of the individual in 1994 (from selling an asset such as a stock or bond for more than the original purchase price)
+*    *capitalloss* = the capital losses of the individual in 1994 (from selling an asset such as a stock or bond for less than the original purchase price)
+*    *hoursperweek* = the number of hours the individual works per week
+*    *nativecountry* = the native country of the individual
+*    *over50k* = whether or not the individual earned more than $50,000 in 1994
+
+### A Logistic Regression Model 
+
+Let's begin by building a logistic regression model to predict whether an individual's earnings are above $50,000 (the variable "over50k") using all of the other variables as independent variables. First, read the dataset census.csv into R.
+
+```{r loaddataset}
+# Load the dataset
+census = read.csv("census.csv")
+```
+
+Then, split the data randomly into a training set and a testing set, setting the seed to 2000 before creating the split. Split the data so that the training set contains 60% of the observations, while the testing set contains 40% of the observations.
+
+```{r splitthedata}
+# Split the data
+library(caTools)
+set.seed(2000)
+spl = sample.split(census$over50k, SplitRatio = 0.6)
+train = subset(census, spl==TRUE)
+test = subset(census, spl==FALSE)
+```
+
+
+Next, build a logistic regression model to predict the dependent variable "over50k", using all of the other variables in the dataset as independent variables. Use the training set to build the model.
+
+```{r logregmodel}
+# Logistic Regression
+censusglm = glm( over50k ~ . , family="binomial", data = train)
+```
+
+#### Which variables are significant, or have factors that are significant?
+```{r significant}
+# Ouput summary
+summary(censusglm)
+```
+
+All variables besides race and nativecountry are significant.
+
+#### What is the accuracy of the model on the testing set? Use a threshold of 0.5.
+```{r accuracylogmodel}
+# Make predictions
+predictTest = predict(censusglm, newdata = test, type = "response")
+# Confusion matrix
+z = table(test$over50k, predictTest >= 0.5)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.8552
+
+#### What is the baseline accuracy for the testing set?
+```{r baselineaccuracy1}
+z = table(test$over50k)
+kable(z)
+# Compute Accuracy
+z[1]/sum(z)
+```
+
+Accuracy = 0.7594
+
+#### What is the area-under-the-curve (AUC) for this model on the test set?
+
+```{r logregauc}
+# Compute AUC
+library(ROCR)
+ROCRpred = prediction(predictTest, test$over50k)
+
+as.numeric(performance(ROCRpred, "auc")@y.values)
+```
+
+AUC = 0.9062
+
+### A CART Model
+
+We have just seen how the logistic regression model for this data achieves a high accuracy. Moreover, the significances of the variables give us a way to gauge which variables are relevant for this prediction task. However, it is not immediately clear which variables are more important than the others, especially due to the large number of factor variables in this problem.
+
+Let us now build a classification tree to predict "over50k". Use the training set to build the model, and all of the other variables as independent variables. Use the default parameters, so don't set a value for minbucket or cp. Remember to specify method="class" as an argument to rpart, since this is a classification problem. After you are done building the model, plot the resulting tree.
+
+```{r cartmodel1}
+# CART Model
+library(rpart)
+library(rpart.plot)
+censustree = rpart( over50k ~ . , method="class", data = train)
+```
+
+#### How many splits does the tree have in total?
+```{r splithetree}
+# Plot tree
+prp(censustree)
+```
+
+4 splits.
+
+#### Which variable does the tree split on at the first level (the very first split of the tree)?
+
+relationship.
+
+#### Which variables does the tree split on at the second level (immediately after the first split of the tree)?
+
+education and capital gain.
+
+#### What is the accuracy of the model on the testing set? Use a threshold of 0.5.
+
+```{r acccartmodel}
+# Make predictions
+predictTest = predict(censustree, newdata = test, type = "class")
+# Confusion matrix
+z = table(test$over50k, predictTest)
+kable(z)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.8474
+
+#### Plot the ROC curve for the CART model you have estimated. Observe that compared to the logistic regression ROC curve, the CART ROC curve is less smooth than the logistic regression ROC curve. Which of the following explanations for this behavior is most correct?
+
+```{r plotrocurve}
+library(ROCR)
+# Calculate AUC
+predictTest = predict(censustree, newdata = test)
+
+ROCRpred = prediction(predictTest[,2], test$over50k)
+as.numeric(performance(ROCRpred, "auc")@y.values)
+
+# Plot ROC
+PredictROC = predict(censustree, newdata = test)
+pred = prediction(PredictROC[,2], test$over50k)
+perf = performance(pred, "tpr", "fpr")
+plot(perf)
+```
+
+The breakpoints of the curve correspond to the false and true positive rates when the threshold is set to the five possible probability values. 
+
+#### What is the AUC of the CART model on the test set?
+
+AUC = 0.8470256
+
+### A Random Forest Model 
+
+Before building a random forest model, we'll down-sample our training set. While some modern personal computers can build a random forest model on the entire training set, others might run out of memory when trying to train the model since random forests is much more computationally intensive than CART or Logistic Regression. For this reason, before continuing we will define a new training set to be used when building our random forest model, that contains 2000 randomly selected obervations from the original training set. Do this by running the following commands in your R console (assuming your training set is called "train"):
+
+```{r trianingsetsmall}
+# New Training Set
+set.seed(1)
+trainSmall = train[sample(nrow(train), 2000), ]
+```
+
+Let us now build a random forest model to predict "over50k", using the dataset "trainSmall" as the data used to build the model. Set the seed to 1 again right before building the model, and use all of the other variables in the dataset as independent variables. (If you get an error that random forest "can not handle categorical predictors with more than 32 categories", re-build the model without the nativecountry variable as one of the independent variables.)
+
+```{r randomforestmodel2}
+# Random Forest model
+set.seed(1)
+censusrf = randomForest(over50k ~ . , data = trainSmall)
+```
+
+Then, make predictions using this model on the entire test set.
+```{r randomforestpredictions}
+# Make predictions
+predictTest = predict(censusrf, newdata=test)
+```
+
+#### What is the accuracy of the model on the test set, using a threshold of 0.5?
+```{r accuracytestingsetrf}
+# Confusion matrix
+z = table(test$over50k, predictTest)
+kable(z)
+# compute Accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.8337112
+
+#### Which of the following variables is the most important in terms of the number of splits?
+
+One metric that we can look at is the number of times, aggregated over all of the trees in the random forest model, that a certain variable is selected for a split. To view this metric, run the following lines of R code (replace "MODEL" with the name of your random forest model):
+
+```{r aggregatedsplits}
+# Metric
+vu = varUsed(censusrf, count=TRUE)
+
+vusorted = sort(vu, decreasing = FALSE, index.return = TRUE)
+
+dotchart(vusorted$x, names(censusrf$forest$xlevels[vusorted$ix]))
+```
+
+Age is the most important in terms of the number of splits.
+
+#### Which one of the following variables is the most important in terms of mean reduction in impurity?
+
+A different metric we can look at is related to "impurity", which measures how homogeneous each bucket or leaf of the tree is. In each tree in the forest, whenever we select a variable and perform a split, the impurity is decreased. Therefore, one way to measure the importance of a variable is to average the reduction in impurity, taken over all the times that variable is selected for splitting in all of the trees in the forest. To compute this metric, run the following command in R (replace "MODEL" with the name of your random forest model):
+
+```{r impurity}
+# Metric
+varImpPlot(censusrf)
+```
+
+Occupation is the most important in terms of mean reduction in impurity.
+
+### Selecting cp by Cross-Validation
+
+We now conclude our study of this data set by looking at how CART behaves with different choices of its parameters.
+
+Let us select the cp parameter for our CART model using k-fold cross validation, with k = 10 folds. Do this by using the train function. Set the seed beforehand to 2. Test cp values from 0.002 to 0.1 in 0.002 increments, by using the following command:
+
+```{r cpbycv}
+library(caret)
+set.seed(2)
+fitControl = trainControl( method = "cv", number = 10 )
+# Select cp
+cartGrid = expand.grid( .cp = seq(0.002,0.1,0.002)) 
+train( over50k ~ . , data = train, method = "rpart", trControl = fitControl, tuneGrid = cartGrid )
+```
+
+#### Which value of cp does the train function recommend?
+
+cp = 0.002
+
+#### Fit a CART model to the training data using this value of cp. What is the prediction accuracy on the test set?
+
+```{r cvcartmodelgood}
+# CART model
+CARTcv = rpart(over50k~., data=train, method="class", cp=0.002)
+# Make predictions
+predictTest = predict(CARTcv, newdata=test, type="class")
+# Confusion matrix
+table(test$over50k, predictTest)
+# Compute accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.8612
+
+#### Compared to the original accuracy using the default value of cp, this new CART model is an improvement, and so we should clearly favor this new model over the old one -- or should we? Plot the CART tree for this model. How many splits are there? 
+```{r plotgoodcv}
+# Plot tree
+prp(CARTcv)
+```
+
+There are 18 splits in the tree.

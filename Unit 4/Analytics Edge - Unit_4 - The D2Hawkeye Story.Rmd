@@ -1,0 +1,308 @@
+---
+title: 'Analytics Edge: Unit 4 - Keeping An Eye on Healthcare Costs'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## The D2Hawkeye Story
+
+### D2Hawkeye
+
+* Founded by Chris Kryder, MD, MBA in 2001
+
+* Combine expert knowledge and databases with analytics to improve quality and cost management in healthcare
+
+* Located in Massachusetts USA, grew very fast and was sold to Verisk Analytics in 2009
+
+<center>
+
+![](d2h.png)
+
+</center>
+
+### Healthcare Case Management
+
+* D2Hawkeye tries to improve healthcare case management
+    + Identify high-risk patients
+    + Work with patients to manage treatment and associated costs
+    + Arrange specialist care
+
+* Medical costs often relate to severity of health problems, and are an issue for both patient and provider
+
+* Goal: improve the quality of cost predictions
+
+### Impact
+
+* Many different types of clients
+    + Third party administrators of medical claims
+    + Case management companies
+    + Benefit consultants
+    + Health plans
+
+* **Millions of people** analyzed monthly through analytic platform in 2009
+
+* **Thousands of employers** processed monthly
+
+### Pre-Analytics Approach
+* Human judgement - MDs manually analyzed patient histories and developed
+
+* Limited data sets
+
+* Costly and inefficient
+
+* Can we used analytics instead?
+
+### Data Sources
+
+* Healthcare industry is data-rich, but data may be hard to access
+    + Unstructured - doctor's notes
+    + Unavailable - hard to get due to differences in technology
+    + Inaccessible - strong privacy laws around healthcare data sharing
+
+* What is available?
+
+* Claims data
+    + Requests for reimbursement submitted to insurance companies or state-provided insurance from doctors, hospitals, and pharmacies.
+    
+* Eligibility information
+* Demographic information
+
+### Claims Data
+
+* Rich, structured data source
+* Very high dimension
+* Doesn't capture all aspects of a persons treatment or health - many things must be inferred
+* Unlike electronic medical records, we do not know the results of a test, only that a test was administered
+
+### D2Hawkeye's Claims Data
+* Available: claims data for **2.4 million people** over a span of **3 years**
+
+* Include only people with data for at least 10 months in both periods - **400,000 people**
+
+### Variables / Cost Profiles
+
+<center>
+
+![](variables.png)
+
+</center>
+
+<center>
+
+![](cp.png)
+
+</center>
+
+* Variables
+    + Chronic condition cost indicators
+    + Gender and age
+    
+### Cost Variables
+
+<center>
+
+![](cv.png)
+
+</center>
+
+
+### Medical Intepretation of Buckets
+
+<center>
+
+![](miob.png)
+
+</center>
+
+### Error Measures
+* Typically we use R^2^ or accuracy, but others can be used
+
+* In case of D2Hawkeye, failing to classify a **high-cost patient** is worse than failing to classify a **low-cost patient** correctly
+
+* Use a "penalty error" to capture this asymmetry
+
+### Penalty Error
+* Key idea: use asymmetric penalties
+* Define a "penalty matrix" as the cost of being wrong
+
+<center>
+
+![](pe.png)
+
+</center>
+
+### Baseline
+* Baseline is to simply predict that the cost in the next "period" will be the cost in the current period
+
+* Accuracy of 75%
+* Penalty Error of 0.56
+
+### Multi-class Classification
+
+* We use predicting a bucket number
+
+<center>
+
+![](b1.png)
+
+</center>
+
+### Most Important Factors
+
+* First splits are related to cost
+
+<center>
+
+![](b2.png)
+
+</center>
+
+### Secondary Factors
+* Risk factors
+* Chronic Illness
+* **"Q146"**
+    + Asthma + depression
+* **"Q1"**
+    + Risk factor indicating hylan injection
+    + Possible knee replacement or arthroscopy
+
+<center>
+
+![](sf.png)
+
+</center>
+
+### Example Groups for Bucket 5
+* Under 35 years old, between $3300 and $3900 in claims, C.A.D., but no office visits in last year.
+
+* Claims between $3900 and $43,000 with at least $8000 paid in last 12 months, $4300 in pharmacy claims, acute cost profile and cancer diagnosis
+
+* More than $58,000 in claims, at least $55,000 paid in last 12 months, and not an acute profile
+
+<center>
+
+![](results.png)
+
+</center>
+
+
+### Insights
+
+* **Substantial improvement** over the baseline
+* **Double accuracy** over baseline in some cases
+* Smaller accuracy improvement on **bucket 5**, but **much lower penalty**
+
+### Analytics Provide an Edge
+* Substantial improvement in D2Hawkeye's ability to identify patients who need more attention
+
+* Because the model was interpret able, physicians were able to improve the model by identifying new variables and refining existing variables
+
+* Analytics gave D2Hawkeye an edge over competition using "last century" methods
+
+## The D2Hawkeye Story in R
+
+### Read in the data
+```{r readdata}
+# Read in the data
+Claims = read.csv("ClaimsData.csv")
+# Output structure
+str(Claims)
+```
+
+### Split the data
+```{r analb}
+# Percentage of patients in each cost bucket
+table(Claims$bucket2009)/nrow(Claims)
+
+# Split the data
+library(caTools)
+
+set.seed(88)
+
+spl = sample.split(Claims$bucket2009, SplitRatio = 0.6)
+
+ClaimsTrain = subset(Claims, spl==TRUE)
+
+ClaimsTest = subset(Claims, spl==FALSE)
+```
+
+
+### Baseline Method
+```{r baseline}
+# Baseline method
+table(ClaimsTest$bucket2009, ClaimsTest$bucket2008)
+
+(110138 + 10721 + 2774 + 1539 + 104)/nrow(ClaimsTest)
+```
+### Create Penalty Matrix
+```{r penmatrix}
+# Penalty Matrix
+PenaltyMatrix = matrix(c(0,1,2,3,4,2,0,1,2,3,4,2,0,1,2,6,4,2,0,1,8,6,4,2,0), byrow=TRUE, nrow=5)
+
+PenaltyMatrix
+
+# Penalty Error of Baseline Method
+as.matrix(table(ClaimsTest$bucket2009, ClaimsTest$bucket2008))*PenaltyMatrix
+
+sum(as.matrix(table(ClaimsTest$bucket2009, ClaimsTest$bucket2008))*PenaltyMatrix)/nrow(ClaimsTest)
+```
+
+
+### CART Model
+```{r cart}
+# Load necessary libraries
+library(rpart)
+library(rpart.plot)
+
+# CART model
+ClaimsTree = rpart(bucket2009 ~ age + alzheimers + arthritis + cancer + copd + depression + diabetes + heart.failure + ihd + kidney + osteoporosis + stroke + bucket2008 + reimbursement2008, data=ClaimsTrain, method="class", cp=0.00005)
+# Plot CART
+prp(ClaimsTree)
+
+
+# Make predictions
+PredictTest = predict(ClaimsTree, newdata = ClaimsTest, type = "class")
+
+table(ClaimsTest$bucket2009, PredictTest)
+
+(114141 + 16102 + 118 + 201 + 0)/nrow(ClaimsTest)
+
+# Penalty Error
+as.matrix(table(ClaimsTest$bucket2009, PredictTest))*PenaltyMatrix
+
+sum(as.matrix(table(ClaimsTest$bucket2009, PredictTest))*PenaltyMatrix)/nrow(ClaimsTest)
+```
+
+### CART model with loss matrix
+```{r newcartmodel}
+# New CART model with loss matrix
+ClaimsTree = rpart(bucket2009 ~ age + alzheimers + arthritis + cancer + copd + depression + diabetes + heart.failure + ihd + kidney + osteoporosis + stroke + bucket2008 + reimbursement2008, data=ClaimsTrain, method="class", cp=0.00005, parms=list(loss=PenaltyMatrix))
+
+# Redo predictions and penalty error
+PredictTest = predict(ClaimsTree, newdata = ClaimsTest, type = "class")
+
+table(ClaimsTest$bucket2009, PredictTest)
+
+(94310 + 18942 + 4692 + 636 + 2)/nrow(ClaimsTest)
+
+sum(as.matrix(table(ClaimsTest$bucket2009, PredictTest))*PenaltyMatrix)/nrow(ClaimsTest)
+```
