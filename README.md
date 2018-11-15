@@ -45,7 +45,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 7 : Election Forecast Revisted](http://rpubs.com/SulmanKhan/437547)
     * [Unit 7 : Visualizing Network Data](http://rpubs.com/SulmanKhan/437581)
     * [Unit 7 : Visualizing Text Data Using World Clouds](http://rpubs.com/SulmanKhan/437587)
-    
+ * [Unit 8 : An Introduction to Linear Optimization](http://rpubs.com/SulmanKhan/440158)
     
     
     
