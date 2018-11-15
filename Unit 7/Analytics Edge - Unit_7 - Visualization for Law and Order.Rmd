@@ -1,0 +1,257 @@
+---
+title: 'Analytics Edge: Unit 7 - Visualization for Law and Order'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## The Analytical Policeman
+
+### The Analytical Policeman
+
+* The explosion of computerized data affects all parts of society, including law and order
+
+* In the past, human judgement and experience was the only tool in identifying patterns in criminal behavior
+
+* Police forces around the US and the world are augmenting human judgement with analytics - sometimes describes as **"predictive"**
+
+### Example: Los Angeles Police Dept.
+
+"I'm not going to get more money. I'm not going to get more cops. I have to be better at using what I have, and that's what **predictive policing ** is about... If this old street cop can change the way that he thinks about this stuff, then I know that my [officers] can do the same."
+
+### The Role of Analytics
+
+* The analytical tools you have learned in this class can be used to make these "predictive policing" models
+
+* However,$\color{red}{\text{communicating}}$ the results of these models is essential - a $\color{blue}{\text{linear regression}}$ output while table will not be of use to a $\color{red}{\text{policewoman on patrol}}$
+
+* Visualization bridges the gap between $\color{blue}{\text{the data and mathematics}}$ and the $\color{red}{\text{end user}}$
+
+### Understanding the Past
+
+* Before we even consider a predictive model, we should try to understand the historical data
+
+* Many cities in the US and around the world would provide logs of reported crimes, usually including the time, locations, and nature of the event
+
+* We will use data from Chicago about motor vehicle thefts
+
+### Crime Over Time
+
+* Suppose we wanted to communicate crime patterns over the course of an average week
+
+* We would display daily averages using a line graph, but this does not seem like it would be too useful
+
+<center>
+
+![](ap1.png)
+
+</center>
+
+* We can replace our **x-axis** with the **hour of the day**, and have different **line for every day of the week**, but this would be a jumbled mess with **7 lines**!
+
+* We could use no visualization at all, and instead present the information in a table
+
+<center>
+
+![](ap2.png)
+
+</center>
+
+* This is valid but how can we make the table more interesting
+
+### Heatmaps
+
+* **Heatmaps** are a way of visualizing data using three attributes. The **x-axis** and **y-axis** are typically displayed horizontally and vertically. The **third attribute** is represented by shades of color.
+
+<center>
+
+![](ap3.png)
+
+</center>
+
+
+* For example, a **low** number, might be $\color{blue}{\text{blue}}$, and a **high** number might be $\color{red}{\text{red}}$
+
+
+* We can pick **different color schemes** based on the **type of data** to convey different messages
+
+* The x-axis and y-axis don't need to be continuous - they can be **categorical**
+
+* We could even combine a heatmap with a **geographical map**
+
+### A Chicao Crime Heatmap
+
+* We will use Chicago motor vehicle theft data to explore patterns of crime
+    + Over days of the week
+    + Over hours of the day
+
+* We're interested in the total number of car thefts that occur in any particular hour of a day of the week: over the whole data set.
+
+### Eye on Crime
+
+* Criminal activity-related data often has both components of time and location
+
+* Sometimes all that is required is a line chart, but heatmaps can visualize data that would be too big for a table
+
+* Plotting data on maps is much more effective than a table for location based data, and is eye-catching
+
+### Predicting Policing
+
+* Many police forces are exploiting their databases to focus finite resources on problem areas
+
+* Not only do analytics help improve policework, the outputs are also good communication tools to decision makers in government and to the wider public
+
+* The application of analytics to data like this is new and growing, with companies like PredPol and Palantir leading the effort.
+
+## The Analytical Policeman in R
+
+
+
+
+#### A Basic Line Plot
+```{r basiclineplot}
+# Load our data:
+mvt = read.csv("mvt.csv", stringsAsFactors=FALSE)
+# Output structure
+str(mvt)
+# Convert the Date variable to a format that R will recognize:
+mvt$Date = strptime(mvt$Date, format="%m/%d/%y %H:%M")
+# Extract the hour and the day of the week:
+mvt$Weekday = weekdays(mvt$Date)
+mvt$Hour = mvt$Date$hour
+# Let's take a look at the structure of our data again:
+str(mvt)
+# Create a simple line plot - need the total number of crimes on each day of the week. We can get this information by creating a table:
+z = table(mvt$Weekday)
+kable(z)
+# Save this table as a data frame:
+WeekdayCounts = as.data.frame(table(mvt$Weekday))
+str(WeekdayCounts) 
+# Load the ggplot2 library:
+library(ggplot2)
+# Create our plot
+ggplot(WeekdayCounts, aes(x=Var1, y=Freq)) + geom_line(aes(group=1))  
+# Make the "Var1" variable an ORDERED factor variable
+WeekdayCounts$Var1 = factor(WeekdayCounts$Var1, ordered=TRUE, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday","Saturday"))
+# Try again:
+ggplot(WeekdayCounts, aes(x=Var1, y=Freq)) + geom_line(aes(group=1))
+# Change our x and y labels:
+ggplot(WeekdayCounts, aes(x=Var1, y=Freq)) + geom_line(aes(group=1)) + xlab("Day of the Week") + ylab("Total Motor Vehicle Thefts")
+```
+
+
+### Adding the Hour of the Day
+```{r addinghouroftheday}
+# Create a counts table for the weekday and hour:
+z = table(mvt$Weekday, mvt$Hour)
+kable(z)
+# Save this to a data frame:
+DayHourCounts = as.data.frame(table(mvt$Weekday, mvt$Hour))
+# Output structure
+str(DayHourCounts)
+# Convert the second variable, Var2, to numbers and call it Hour:
+DayHourCounts$Hour = as.numeric(as.character(DayHourCounts$Var2))
+# Create out plot:
+ggplot(DayHourCounts, aes(x=Hour, y=Freq)) + geom_line(aes(group=Var1))
+# Change the colors
+ggplot(DayHourCounts, aes(x=Hour, y=Freq)) + geom_line(aes(group=Var1, color=Var1), size=2)
+# Separate the weekends from the weekdays:
+DayHourCounts$Type = ifelse((DayHourCounts$Var1 == "Sunday") | (DayHourCounts$Var1 == "Saturday"), "Weekend", "Weekday")
+# Redo our plot, this time coloring by Type:
+ggplot(DayHourCounts, aes(x=Hour, y=Freq)) + geom_line(aes(group=Var1, color=Type), size=2) 
+# Make the lines a little transparent:
+ggplot(DayHourCounts, aes(x=Hour, y=Freq)) + geom_line(aes(group=Var1, color=Type), size=2, alpha=0.5) 
+# Fix the order of the days:
+DayHourCounts$Var1 = factor(DayHourCounts$Var1, ordered=TRUE, levels=c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+# Make a heatmap:
+ggplot(DayHourCounts, aes(x = Hour, y = Var1)) + geom_tile(aes(fill = Freq))
+# Change the label on the legend, and get rid of the y-label:
+ggplot(DayHourCounts, aes(x = Hour, y = Var1)) + geom_tile(aes(fill = Freq)) + scale_fill_gradient(name="Total MV Thefts") + theme(axis.title.y = element_blank())
+# Change the color scheme
+ggplot(DayHourCounts, aes(x = Hour, y = Var1)) + geom_tile(aes(fill = Freq)) + scale_fill_gradient(name="Total MV Thefts", low="white", high="red") + theme(axis.title.y = element_blank())
+```
+
+### VIDEO 5 - Maps
+```{r Maps}
+# Install and load two new packages:
+library(maps)
+library(devtools)  
+library(ggmap)
+register_google(key = "AIzaSyBlCZXGDK9dN3Vf_N1qdI6mPfFFCA34ubs")
+# Load a map of Chicago into R:
+chicago = get_map(location = "chicago", zoom = 11)
+# Look at the map
+ggmap(chicago)
+# Plot the first 100 motor vehicle thefts:
+ggmap(chicago) + geom_point(data = mvt[1:100,], aes(x = Longitude, y = Latitude))
+# Round our latitude and longitude to 2 digits of accuracy, and create a crime counts data frame for each area:
+LatLonCounts = as.data.frame(table(round(mvt$Longitude,2), round(mvt$Latitude,2)))
+# Subset for Freq > 0
+LatLonCounts2 = subset(LatLonCounts, Freq > 0)
+#Output structure
+str(LatLonCounts)
+str(LatLonCounts2)
+# Convert our Longitude and Latitude variable to numbers:
+LatLonCounts$Long = as.numeric(as.character(LatLonCounts$Var1))
+LatLonCounts$Lat = as.numeric(as.character(LatLonCounts$Var2))
+LatLonCounts2$Long = as.numeric(as.character(LatLonCounts2$Var1))
+LatLonCounts2$Lat = as.numeric(as.character(LatLonCounts2$Var2))
+# Plot these points on our map:
+ggmap(chicago) + geom_point(data = LatLonCounts, aes(x = Long, y = Lat, color = Freq, size=Freq))
+# Change the color scheme:
+ggmap(chicago) + geom_point(data = LatLonCounts, aes(x = Long, y = Lat, color = Freq, size=Freq)) + scale_colour_gradient(low="yellow", high="red")
+# We can also use the geom_tile geometry
+ggmap(chicago) + geom_tile(data = LatLonCounts, aes(x = Long, y = Lat, alpha = Freq), fill="red")
+#freq > 0
+ggmap(chicago) + geom_tile(data=LatLonCounts2, aes(x = Long, y = Lat, alpha=Freq), fill="red")
+```
+
+
+### Geographical Map on US
+```{r geomapus}
+# Load our data:
+murders = read.csv("murders.csv")
+# Output structure
+str(murders)
+# Load the map of the US
+statesMap = map_data("state")
+# Output structure
+str(statesMap)
+# Plot the map:
+ggplot(statesMap, aes(x = long, y = lat, group = group)) + geom_polygon(fill = "white", color = "black") 
+# Create a new variable called region with the lowercase names to match the statesMap:
+murders$region = tolower(murders$State)
+# Join the statesMap data and the murders data into one dataframe:
+murderMap = merge(statesMap, murders, by="region")
+str(murderMap)
+# Plot the number of murder on our map of the United States:
+ggplot(murderMap, aes(x = long, y = lat, group = group, fill = Murders)) + geom_polygon(color = "black") + scale_fill_gradient(low = "black", high = "red", guide = "legend")
+# Plot a map of the population:
+ggplot(murderMap, aes(x = long, y = lat, group = group, fill = Population)) + geom_polygon(color = "black") + scale_fill_gradient(low = "black", high = "red", guide = "legend")
+# Create a new variable that is the number of murders per 100,000 population:
+murderMap$MurderRate = murderMap$Murders / murderMap$Population * 100000
+# Redo our plot with murder rate:
+ggplot(murderMap, aes(x = long, y = lat, group = group, fill = MurderRate)) + geom_polygon(color = "black") + scale_fill_gradient(low = "black", high = "red", guide = "legend")
+# Redo the plot, removing any states with murder rates above 10:
+ggplot(murderMap, aes(x = long, y = lat, group = group, fill = MurderRate)) + geom_polygon(color = "black") + scale_fill_gradient(low = "black", high = "red", guide = "legend", limits = c(0,10))
+```
+
+

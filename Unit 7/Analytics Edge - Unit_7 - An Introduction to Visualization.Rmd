@@ -1,0 +1,247 @@
+---
+title: 'Analytics Edge: Unit 7 - An Introduction to Visualization'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Visualizing the World
+
+### Why Visualization?
+
+* "The picture-examining eye is the best finder we have of the wholly unanticipated" - *John Tukey*
+
+* Visualizing data allows us to discern relationships, structures, distributions, outlines, patterns, behaviors, dependencies, and outcomes
+
+* Useful for initial data exploration, for interpreting your model, and for communicating your results
+
+#### Initial Exploration Shows a Relationship
+
+<center>
+
+![](one.png)
+
+</center>
+
+#### Explore Further: Color by Factor
+
+<center>
+
+![](one.png)
+
+</center>
+
+#### Plot the Regression Line
+
+<center>
+
+![](three.png)
+
+
+</center>
+
+#### Add Geographical Data to a Map
+
+<center>
+
+![](four.png)
+
+
+</center>
+
+#### Show Relationships in a Heatmap
+
+<center>
+
+![](five.png)
+
+
+</center>
+
+
+#### Make Histograms - Explore Categories
+
+<center>
+
+![](six.png)
+
+</center>
+
+#### Color a Map According to Data
+
+<center>
+
+![](seven.png)
+
+</center>
+
+#### The Power of Visualizations
+
+* We will see how visualizations can be used to
+    + Better understand data
+    + Communication information to the public
+    + Show the results of analytical models
+
+### The World Health Organization
+
+"WHO is the authority for health within the United Nations system. It is responsible for providing leadership on global health matters, shaping the health research agenda, setting norms and standards, articulating evidence-based policy options, providing technical support to countries and monitoring and assessing health trends."
+
+### The World Health Report
+
+* WHO communicates information about global health in order to inform citizens, donors, policymakers, and organizations across the world
+
+* Their primary publication is "World Health Report"
+
+* Each issue focuses on a specific aspect of global health, and includes statistics and experts' assessments
+
+### Online Data Repository
+
+* WHO also maintains an open, online repository of global health data
+
+* WHO provides some data visualizations, which helps them communicate more effectively with the public
+
+<center>
+
+![](wec.png)
+
+</center>
+
+### What is a Data Visualization?
+
+* A mapping of data properties to visual properties
+
+* Data properties are usually numerical or categorical
+
+* Visual properties can be (x,y) coordinates, colors, sizes, shapes and heights
+
+### Anscombe's Quartet
+
+<center>
+
+![](aq1.png)
+
+</center>
+
+* Mean of X : 9.0
+* Variance of X : 11.0
+* Mean of Y : 7.50
+* Variance of Y : 4.12
+* Correlation between X and Y : 0.816
+* Regression Equation : Y = 3.00 + 0.500X
+
+<center>
+
+![](aq2.png)
+
+</center>
+
+    
+### ggplot
+
+* "ggplot2 is a plotting system for R, based on the grammar of graphics, which tries to take the good parts of base and lattice graphics and none of the bad parts. It takes care of many of the fiddly details that make plotting a hassle (like drawing legends) as well as providing a power model of graphics that make it easy to produce complex multi-layered graphics." - *Hadley Wickham, creator, www.ggplot2.org*
+
+### Graphics in Base R vs ggplot
+
+* In base R, each mapping of data properties to visual properties is its own special case
+    + Graphics composed of simple elements like points, lines
+    + Difficult to add elements to existing plots
+
+* In ggplot, the mapping of data properties to visual properties is done by adding layers to the plot
+
+### Grammar of Graphics
+
+* ggplot graphics consist of at least 3 elements:
+
+    + **Data*, in a data frame
+    + **Aesthetic mapping** describing how variables in the data frame are mapped to graphical attributes
+        - Color, shape, scale, x-y axes, subsets
+    + **Geometric objects** determine how values are rendered graphically
+        - Points, lines, boxplots, bars, polygons
+        
+### The Analytics Edge
+* WHO's online data repository of global health information is used by citizens, policymakers, and organizations across the world.
+
+* Visualizing the data facilitates the understanding and communication of global health trends at a glance
+
+*ggplot in R lets you visualize for exploration, modeling, and sharing results
+
+## WHO Visualizations in R
+
+### Basic Scatterplot
+```{r basicscatterplot}
+# Read in data
+WHO = read.csv("WHO.csv")
+# Output structure
+str(WHO)
+# Plot 
+plot(WHO$GNI, WHO$FertilityRate)
+# Let's redo this using ggplot 
+# Install and load the ggplot2 library:
+library(ggplot2)
+# Create the ggplot object with the data and the aesthetic mapping:
+scatterplot = ggplot(WHO, aes(x = GNI, y = FertilityRate))
+# Add the geom_point geometry
+scatterplot + geom_point()
+# Make a line graph instead:
+scatterplot + geom_line()
+# Switch back to our points:
+scatterplot + geom_point()
+# Redo the plot with blue triangles instead of circles:
+scatterplot + geom_point(color = "blue", size = 3, shape = 17) 
+# Another option:
+scatterplot + geom_point(color = "darkred", size = 3, shape = 8) 
+# Add a title to the plot:
+scatterplot + geom_point(colour = "blue", size = 3, shape = 17) + ggtitle("Fertility Rate vs. Gross National Income")
+# Save our plot:
+fertilityGNIplot = scatterplot + geom_point(colour = "blue", size = 3, shape = 17) + ggtitle("Fertility Rate vs. Gross National Income")
+pdf("MyPlot.pdf")
+print(fertilityGNIplot)
+dev.off()
+```
+
+
+### MORE ADVANCED SCATTERPLOTS 
+```{r radvanced scatterplots}
+# Color the points by region: 
+ggplot(WHO, aes(x = GNI, y = FertilityRate, color = Region)) + geom_point()
+# Color the points according to life expectancy:
+ggplot(WHO, aes(x = GNI, y = FertilityRate, color = LifeExpectancy)) + geom_point()
+
+# Is the fertility rate of a country was a good predictor of the percentage of the population under 15?
+ggplot(WHO, aes(x = FertilityRate, y = Under15)) + geom_point()
+# Let's try a log transformation:
+ggplot(WHO, aes(x = log(FertilityRate), y = Under15)) + geom_point()
+# Simple linear regression model to predict the percentage of the population under 15, using the log of the fertility rate:
+mod = lm(Under15 ~ log(FertilityRate), data = WHO)
+summary(mod)
+# Add this regression line to our plot:
+ggplot(WHO, aes(x = log(FertilityRate), y = Under15)) + geom_point() + stat_smooth(method = "lm")
+# 99% confidence interval
+ggplot(WHO, aes(x = log(FertilityRate), y = Under15)) + geom_point() + stat_smooth(method = "lm", level = 0.99)
+# No confidence interval in the plot
+ggplot(WHO, aes(x = log(FertilityRate), y = Under15)) + geom_point() + stat_smooth(method = "lm", se = FALSE)
+# Change the color of the regression line:
+ggplot(WHO, aes(x = log(FertilityRate), y = Under15)) + geom_point() + stat_smooth(method = "lm", colour = "orange")
+```
+
+
+
+
