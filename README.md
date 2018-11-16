@@ -47,7 +47,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 7 : Visualizing Text Data Using World Clouds](http://rpubs.com/SulmanKhan/437587)
  * [Unit 8 : An Introduction to Linear Optimization](http://rpubs.com/SulmanKhan/440158)
     * [Unit 8 : Radiation Therapy](http://rpubs.com/SulmanKhan/440223)  
-    
+    * [Unit 8 : Google Adwords](http://rpubs.com/SulmanKhan/440457)
     
     
 -Sulman Khan
