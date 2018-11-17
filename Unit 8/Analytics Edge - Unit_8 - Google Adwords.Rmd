@@ -1,0 +1,205 @@
+---
+title: 'Analytics Edge: Unit 8 - Google Adwords'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Optimizing Online Advertising
+
+### Google Inc.
+
+* Provides products and services related to the Internet
+    + Mission: "... to organize the world's information and make it universally accessible and useful."
+
+* Most widely known for its search engine
+    + User enters a query, Google returns links to websites that best fit query
+
+### History of Google
+* 1996 - Sergei Brin and Larry Page, graduate students at Stanford, working on a research project
+    + How to measure importance of any webpage using links on the internet
+
+* 1998 - Incorporated Google as a company and received first funding; database of 60 million webpages
+
+* 2005 - Initial Public Offering
+
+* 2007 - Google acquires YouTube and other companies
+
+* 2013 - **More than 1 billion unique monthly visitors**
+
+### Google's Business Model
+* Google search engine is free to use, so how does Google make money?
+
+* Answer: **online advertising**
+
+### Google Advertising - AdWords
+* Why do companies advertise on Google?
+    + Google receives heavy traffic
+    + Search pages are formatted in a very clean way
+    + Companies can choose which type of queries their adds will be displayed for; better targeting
+
+* 97% of Google's revenues come from AdWords
+
+### How does Advertising on Google work?
+
+* Advertisers place bids for different queries in an auction
+
+* Based on bids and *quality save* (fit of advertiser and ad to the queries), Google decides price-per-click of each advertisers and each query
+
+* Google then decides how often to display each ad for each query
+
+### Price-per-click (PPC)
+* For each query, Google decides each advertiser's **price-per-click (PPC)**
+    + How much advertiser pays Google when user clicks ad for that query
+
+* Each advertiser also species a **budget**
+    + Each time user clicks on advertiser's ad, budget is depleted by PPC amount
+
+### Example of price-per-click
+
+<center>
+
+![](ppc1.png)
+
+</center>
+
+### Click-through Rate (CTR)
+
+* Advertiser only pays Google if the user *clicks* on the ad
+
+* The probability that a user clicks on an advertiser's ad is the **click-through rate (CTR)**
+    + Can also think of as "clicks per user"
+
+### Example of click-through rate
+
+<center>
+
+![](ccc1.png)
+
+</center>
+
+### Average Price Per Display
+
+* Average amount that an advertiser pays each time its ad is shown is **PPC x CTR**
+
+### How average per display works
+
+<center>
+
+![](apd1.png)
+
+</center>
+
+<center>
+
+![](apd2.png)
+
+</center>
+
+<center>
+
+![](apd3.png)
+
+</center>
+
+<center>
+
+![](apd4.png)
+
+</center>
+
+<center>
+
+![](apd5.png)
+
+</center>
+
+<center>
+
+![](apd6.png)
+
+</center>
+
+<center>
+
+![](apd8.png)
+
+</center>
+
+<center>
+
+![](apd9.png)
+
+</center>
+
+### Query estimates
+* Google does not control how many times a query will be requested - driven by users!
+
+* For each query, Google has estimate of number of times query will be requested over a given day
+
+### Google's problem
+* **How many times to display each ad for each query to maximize revenue**
+
+* Objective
+    + Maximize revenue
+* Decision
+    + For each advertiser and query, number of times ad will be displayed for that query
+* Constraints
+    + Average amount paid by each advertiser cannot exceed budget
+    + Total ads for given query cannot exceed estimated number of requests for that query
+ 
+
+#### Problem data
+
+<center>
+
+![](pd.png)
+
+</center>
+
+#### Modeling the problem
+
+<center>
+
+![](mtp.png)
+
+</center>
+
+#### Slates/positions
+* Search result page has space for more than one ad
+
+* **Slate**: combination of ads
+
+* Many possible slates: which ones to display?
+
+#### Personalization
+* In addition to the query, Google can use other information to decide which ad to display:
+    + IP address/geographic location
+    + Previous Google searches/browser activity on Google
+
+* How do we account for this?
+
+### AdWords at Google's scale?
+* In reality, problem is much larger
+    + Hundreds to thousands of bidders, over $40 billion
+    + Gains from optimization at this scale become enormous
+    
+    

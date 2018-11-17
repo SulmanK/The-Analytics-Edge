@@ -1,0 +1,143 @@
+---
+title: 'Analytics Edge: Unit 8 - Gasoline Blending  '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Gasoline Blending 
+
+### Background Information on the Dataset
+One of the earliest and most successful applications of linear optimization was in the oil industry in the 1950s. According to Bill Drew, the former manager of research for Exxon Mobil, the company used linear optimization to "schedule our tanker fleets, design port facilities, blend gasoline, create financial models, you name it."  In this problem, we'll use optimization to blend gasoline. (While the application of this problem is real, the data that we will be using here has been created for this problem.) 
+
+Gasoline blending occurs in oil refineries, where crude oil is processed and refined into more useful products, such as gasoline and diesel fuel. We will consider three products: super gasoline, regular gasoline, and diesel fuel. These can be made by mixing three different types of crude oil: crude 1, crude 2, and crude 3. Each product is distinguished by its octane rating, which measures the quality of the fuel, and its iron content, which is a contaminant in the gas. The crude oils each have an octane rating and iron content as well. The following table shows the required octane ratings and iron contents for each of the products, as well as the known octane ratings and iron contents of each of the crude oils:
+Product or Oil	Octane Rating	Iron Content
+Super Gasoline 	at least 10 	no more than 1
+Regular Gasoline 	at least 8 	no more than 2
+Diesel Fuel 	at least 6 	no more than 1
+Crude 1 	12 	0.5
+Crude 2 	6 	2.0
+Crude 3 	8 	3.0
+
+The gasoline produced must meet these standards for octane ratings and iron content. The octane rating and iron content of a product is the weighted average of the octane rating and iron content of the crude oils used to produce it. For example, if we produce regular gasoline using 20 barrels of Crude 1, 5 barrels of Crude 2, and 10 barrels of Crude 3, the Octane Rating of the regular gasoline would be:
+
+$$(20*12 + 5*6 + 10*8)/35 = 10$$
+
+The numerator is the number of barrels of Crude 1 used times the octane rating of Crude 1, plus the number of barrels of Crude 2 used times the octane rating of Crude 2, plus the number of barrels of Crude 3 used times the octane rating of Crude 3. The denominator is the total number of barrels used.
+
+Similarly, the iron content of the regular gasoline would be:
+
+$$(20*0.5 + 5*2.0 + 10*3.0)/35 = 1.43$$
+
+The objective of the oil company is to maximize profit. The following table gives the sales price (revenue) for one barrel of each of the products: 
+Product	Sales Price
+Super Gasoline 	$70
+Regular Gasoline 	$60
+Diesel Fuel 	$50
+
+And the following table gives the purchase price for one barrel of each of the crude oils:
+Oil	Purchase Price
+Crude 1 	$45
+Crude 2 	$35
+Crude 3 	$25
+
+We would like to maximize the amount made by selling the products, minus the amount it costs to buy the crude oils.
+
+The company can only buy 5,000 barrels of each type of crude oil, and can process no more than 14,000 barrels total of crude oil. One barrel of crude oil makes one barrel of gasoline or fuel (nothing is lost in the conversion).
+
+How many barrels of each type of crude oil should the company use to make each product? Formulate this problem as a linear optimization problem, and solve it in LibreOffice (or in the spreadsheet software you are using). The first problem below asks about the formulation, and the second problem asks about the solution. So if you get stuck in formulating the problem, try working through Problem 1 below.
+
+HINT: When trying to solve this problem, your solver might complain that it is nonlinear. Be careful how you construct the octane and iron constraints. If x, y, and z are variables, and you are trying to add the constraint:
+
+$$\frac{12x+6y+8z}{x+y+z} \geq 10$$
+
+
+It needs to be formulated as:
+
+$$12x+6y+8z \geq 10(x+y+z)$$
+
+This is because you can only add variables in linear constraints. Note that this is the same constraint - we just multiplied both sides of the denominator of the fraction.
+
+### The Formulation 
+
+#### How many decision variables are there in this optimization model?
+
+The are nine decision variables in this optimization model - one for each product and each type of crude oil. So we should have one decision variable for the amount of Crude 1 to use in Super Gasoline, one decision variable for the amount of Crude 2 to use in Super Gasoline, etc.
+
+#### How many constraints are in the model, not including the non-negativity constraints?
+
+There are 10 constraints in this model. Three for the octane limits, three for the lead limits, three for each of the crude oil limits, and one for the total crude limit. 
+
+### The Solution 
+
+Solve your optimization model in LibreOffice (or in the spreadsheet software you are using). 
+
+
+#### What is the objective value of the solution?
+
+$375000 is the objective value of the solution.
+
+#### In the optimal solution, we produce the MOST barrels of which gasoline?
+
+We produce far more barrels of regular gasoline than either of the other two types in the optimal solution.
+
+#### In the optimal solution, how many barrels of diesel fuel are produced?
+
+No barrels of crude oil are used to produce diesel fuel, so 0 barrels of diesel fuel are produced.
+
+#### The company is unhappy with this solution, because they are exceeding the customer demand for regular gasoline. They estimate that the customer demand for super gasoline is 3,000 barrels, the customer demand for regular gasoline is 2,000 barrels, and the customer demand for diesel fuel is 1,000 barrels. They don't want to produce more than the customer demand, since they will lose revenue. Add constraints to your model to make sure that the solution produces no more than the customer demand for each of the products, and re-solve your model. 
+
+##### What is the objective value now?
+
+$150000 is the objective value.
+
+##### Which of the crude oils are used in the solution?
+
+Crude 2 is not used in the solution - all of the decision variables corresponding to Crude 2 are zero.
+
+### Sensitivity Analysis and Shadow Prices 
+
+The following are the shadow prices for each of the demand constraints:
+
+Super gasoline demand shadow price = 29
+
+Regular gasoline demand shadow price = 27
+
+Diesel fuel demand shadow price = 9
+
+The super gasoline shadow price holds to an allowable increase of 1250, the regular gasoline shadow price holds to an allowable increase of 2500, and the diesel fuel shadow price holds to an allowable increase of 1250. The "allowable increase" is the amount that you can increase the right-hand side and still use this shadow price. For a larger increase, the shadow price will change, and you have to resolve the model to get the new shadow price.
+
+#### What does a shadow price of 29 for the super gasoline demand constraint mean?
+
+The shadow price of a constraint means that for one unit increase in the right hand side of the constraint, the shadow price will be added to the objective value. So, a shadow price of 29 for the super gasoline demand constraint means that for one additional barrel of demand of super gasoline, the total profit will increase by 29.
+
+#### According to the shadow prices, which type of gasoline should the company advertise to increase demand? Suppose that advertising costs $2 per unit increase in demand regardless of the type of gasoline being advertised.
+
+The gasoline with the largest shadow price is the most profitable if demand is increased, since an extra unit of demand increases profits the most.
+
+#### How much additional profit would you gain if the super gasoline demand increased by 500? 
+
+Since the shadow price of super gasoline demand is 29, and this holds up to an allowable increase of 1250, the gained profit from an increase of 500 is 29*500 = 14,500. 
+
+#### How much additional profit would you gain if you increased the super gasoline demand by 1500?
+
+Since the shadow price only holds up to an allowable increase of 1250, we can't answer this question given the information provided.
+

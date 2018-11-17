@@ -1,0 +1,102 @@
+---
+title: 'Analytics Edge: Unit 8 - Filatoi Riuniti '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Filatoi Riuniti
+
+### Background Information on the Dataset
+The northern regions of Italy are the heartlands of the Italian textile industry, providing textile products for many great Italian (and non-Italian) fashion houses. Most of today's companies were founded at the turn of the century and have grown and thrived despite a series of twentieth century catastrophes, including the Great Depression and World War II. Sales in the entire Italian textile and apparel industry were about $80 billion in 2007. The Italian textile-fashion industry employs over 400,000 people. 
+
+Filatoi Riuniti is a family-owned spinning mill located in northwest Italy. They produce cotton yarn, which is one of the raw materials that is used to produce the fabrics that are then cut and sewn by Italian stylists into the worldwide famous Italian clothes. 
+
+Demand for Filatoi Riuniti's production is strong, but their spinning machine capacity is insufficient to meet its production orders. They decided to outsource part of the spinning production to six local family-owned spinning mills: Ambrosi, Bresciani, Castri, De Blasi, Estensi, and Giuliani. The local mills charge higher prices for spinning finer yarns, so Filatoi Riuniti has decided to spin as much as possible of the finer yarns entirely in-house and to outsource only the spinning of low-end (coarser) yarns. Last month, they faced a total demand of 104,500 kg of cotton and they outsourced 32,000 kg of the low-end sizes. 
+
+Filatoi Riuniti hired a consulting firm to see if the outsourcing strategies to the six local mills could be improved. After analyzing the data, they immediately saw the potential for very large savings through more optimal outsourcing strategies. In this problem, we'll improve the outsourcing strategy of Filatoi Riuniti using linear optimization. (Note: This problem is based off of a real case, but the names have been changed for privacy reasons.)
+
+### Formulating the Optimization Problem
+
+Filatoi Riuniti produces four different sizes of yarn: extra fine, fine, medium, and coarse. Their current strategy is to produce all of the fine and extra fine yarn in-house, outsource some of the medium yarn to the lowest-price mill, and outsource all of the coarse yarn to the other mills. To try to improve this strategy, let's set up an optimization problem.
+
+The spreadsheet FilatoiRiuniti.ods for LibreOffice or OpenOffice, and FilatoiRiuniti.xlsx for Microsoft Excel, contains data for the problem. This data includes information about production hours, capacities, costs, and demand. Ambrosi and De Blasi can't produce extra fine yarn, so no data is provided for extra fine yarn at these mills.
+
+The decision variables are the amount of yarn of each size that each company should be assigned to produce. There are four sizes, and seven companies (including Filatoi Riuniti). These decision variables are set up in the spreadsheet. Note that the decision variables should be non-negative - none of the mills can produce a negative amount of yarn!
+
+The objective is to minimize costs. The prices charged by the six local mills for production, as well as the production cost at Filatoi Riuniti, are provided in the spreadsheet. Additionally, the yarn that is spun by the six local mills needs to be transported. The transportation costs per kg of yarn are also provided in the spreadsheet.
+
+Our model has two types of constraints: capacity constraints and demand constraints. The spreadsheet contains a table showing the production capacity and production rate per product for each of the mills (including Filatoi Riuniti). For example, at the Bresciani mill, it takes 0.70 hours to produce one kg of extra fine yarn, and there are a total of 3,000 machines hours per month available at this mill. There is also a table that estimates the demand for the four yarn sizes in the current month. We should produce at least the demand for each yarn type.
+
+Formulate and solve this problem in LibreOffice (or in the spreadsheet software you are using). The objective should minimize the sum of the production and transportation costs. You should have the following constraints: non-negative decision variables, a capacity constraint for each mill, and a demand constraint for each type of yarn. Remember that Ambrosi and De Blasi can't produce extra fine yarn, so you should also account for this.
+
+#### What is the objective value of the solution?
+
+$1382544.334 is the objective value found in the solver.
+
+#### How many kg of medium yarn is outsourced?
+
+6249.999999 kg of fine yarn is outsourced.
+
+#### At which mills does Filatoi use the maximum capacity available? 
+
+We use the maximum capacity available at all mills except for De Blasi, where we only use 714 of the 2600 hours available.
+
+### Sensitivity Analysis 
+
+n Problems 2 and 3, we'll be checking how sensitive our model is to the data and constraints. If you change the constraints or data values to answer any of the questions, make sure to change them back to the original values before continuing on to the next problem.
+
+Filatoi Riuniti should obviously consider increasing its spinning machine capacity. They could slightly expand the production capacity of the existing machines by renting an upgrade. This would increase their spinning production capacity by 600 hours/month. 
+
+#### The monthly rental cost is $1,500/month. Would you recommend that they rent the upgrade?
+
+
+
+Increasing Filatoi Riuniti's spinning capacity by 600 hours/month and resolving the problem decreases the objective value to \$1,381,273.75, which means that they save \$1270.59 in costs. But since the cost of the upgrade is $1,500, it is not worth it to rent the upgrade.
+
+#### Alternatively, Filatoi Riuniti could increase its spinning machine capacity by renting another spinning machine for the production of only medium size yarn, for a monthly rental cost of $3,000. The machine has a production capacity of 300 hours per month (the machine would run at the same rate of 0.425 hours/Kg). Suppose that the estimated production cost of running this machine is less than that for Filatoi Riuniti's existing machines and is estimated to be $5.70/Kg (as opposed to $11.40/Kg for their existing machines). Would you recommend that Filatoi Riuniti rent the machine?
+
+$12.30 per kg of yarn 
+
+Filatoi should charge at least $12.30 per kg to the new client, since this is the amount it will cost per-unit to increase the medium yarn demand by 5,000.
+
+#### Now suppose that the client wants to purchase 6,000 kg/month of medium size yarn. Now what is the minimum price per kg of yarn that Filatoi Riuniti should quote to this new client? (In answering this question, assume that Filatoi has not decided to increase its spinning machine capacity, and that Filatoi does not want to change the prices that they currently charge their existing clients.)
+
+$12.45 per kg of yarn
+
+We can't answer this question using just the shadow price, since it only holds for an allowable increase of 5,388. But we can increase the demand for medium yarn by 6,000 (to 34,000) and re-solve our optimization problem. The new objective value is 1,457,237.88. Comparing this to the old objective of 1,382,544.33, the increase is 74,693.55. Dividing by 6,000, this is an increase of 12.45 per kg. This is the minimum price that we should charge the client per kg of yarn.
+
+### Data Estimates
+
+In many situations, the problem data is estimated but is not known for sure. In this problem, the optimization model is based in part on the prices charged by the local mills to Filatoi Riuniti and on an estimate of Filatoi Riuniti's internal production costs. The plant manager, the accounting department, and you estimate that Filatoi Riuniti's internal production costs could vary within a 5% range of the numbers given.
+
+#### If Filatoi Riuniti's production costs increase by 5%, by how much does the objective value of the solution change? You should adjust and re-optimize the model to answer this question.
+
+48924.5.
+
+#### If Filatoi Riuniti's production costs decrease by 5%, by how much does the objective value of the solution change (in absolute difference)? You should adjust and re-optimize the model to answer this question.
+
+48924.49031.
+
+#### Now you think that the production capacity of one of your local mills, De Blasi, could vary within a 20% range of the estimated value. In the current solution, De Blasi produces 2040.125 kg of medium yarn, and none of the other types of yarn. If De Blasi's capacity is actually 20% higher or lower than the estimated value, will the solution change? HINT: Think about De Blasi's capacity constraint.
+
+De Blasi's capacity constraint is not binding in the current solution. While they have a capacity of 2600 hours, we only use 714 hours. So even if the capacity changes by 20%, the solution will not change.
+

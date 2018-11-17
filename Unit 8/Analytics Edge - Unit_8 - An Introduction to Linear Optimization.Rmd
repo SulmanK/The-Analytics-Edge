@@ -1,0 +1,429 @@
+---
+title: 'Analytics Edge: Unit 8 - An Introduction to Linear Optimization'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## REVENUE MANAGEMENT
+
+### Airline Regulation (1938-1978) 
+
+* The Civil Aeronautics Board (CAB) set fares, routes, and schedules for all interstate air transport
+
+* Most major airlines favored this system due to guaranteed profits
+
+* Led to inefficiency and higher costs
+    + Applications for new routes and fares often delayed or dismissed
+    
+### Airline Deregulation (1978)
+
+* The administration of President Jimmy Carter passed the Airline Deregulation Act in 1978
+
+* The Act encouraged
+    + **More competition**: 52 new airlines between 1980 and 2000
+    + **New air routes**: saved passengers an estimated $10.3 billion each year in travel time
+    + **Lower fares**: ticket prices are 40% lower today than they were in 1978
+
+* This led to **more passengers**
+    + The number of air passengers increased from 207.5 million in 197.4 to 721.1 million in 2010
+    
+### A competetitive Edge
+* More competition led to heavy losses by air carriers
+    + Need to lower fares while meeting operating costs
+
+* 9 major carriers and more than 100 smaller airlines went bankrupt between 1978 and 2002
+
+* How did airlines compete?
+
+### Discount Fares
+
+* On January 17, 1985 American Airlines (AA) launched its Ultimate Super Saver fares to compete with PeopleExpress
+
+* Need to fill at least a minimum number of seats without selling every seat at discount prices
+    + Sell enough seats to cover fixed operating costs
+    + Sell remaining seats at higher rates to maximize revenues/profits
+    
+### How Many Seats to Sell on Discount
+* Passengers have different valuations
+    + Business people value flexibility (last-minute/refundable)
+    + People seeking getaways value good deals (early birds)
+
+* Sell too many discounted seats
+    + Not enough seats for high-paying passengers
+
+* Sell too few discounted seats
+    + Empty seats at takeoff implying lost revenue
+
+* How should AA allocates its seat among customers to maximize its revenue
+
+### Simple Problem - JFK to LAX
+
+<center>
+
+![Route](map.png)
+
+</center>
+
+
+<center>
+
+![Ticket Prices](tp.png)
+
+</center>
+
+
+<center>
+
+![166 Economy seats](bo.png)
+
+</center>
+
+
+#### Demand Forecasting
+
+* Demand for different prices can be forecasted using analytics tools, looking at historical data and incorporating models of human behavior
+      + Time series methods
+      + Linear regression
+
+* Forecasts could be erroneous
+      + Need to assess sensitivity to forecast errors
+
+* We'll assume that demand has been forecasted
+
+#### Myopic Solution
+
+<center>
+
+![](t1.png)
+
+</center>
+
+* How many discount seats to sell to maximize revenue
+
+* This seems simple, but what if we had 100 different flights?
+
+#### Single Route Example
+
+<center>
+
+![](t2.png)
+
+</center>
+
+* Problem: Find the optimal number of discounted seats and regular seats to sell to maximize revenue
+
+#### Step 1: Decisions
+
+<center>
+
+![](t2.png)
+
+</center>
+
+* What are our decisions?
+    + Number of regular seats to sell - R
+    + Number of discount seats to sell - D
+
+#### Step 2: Objective
+
+<center>
+
+![](t2.png)
+
+</center>
+
+* What is our objective?
+    + Maximizing total airline revenue
+    + Revenue from each type of seat is equal to the number of that type of seat sold times the seat price
+
+$$max = 617R + 238D$$
+
+#### Step 3: Constraints
+
+<center>
+
+![](t2.png)
+
+</center>
+
+* AA cannot sell more seats than the capacity
+    + Total number of seats sold cannot exceed capacity
+
+
+$$R + D \leq 166$$
+* AA cannot sell more seats than the demand
+    + Regular seats sold cannot exceed 100 
+    
+$$R \leq 100$$
+    + Discount seats sold cannot exceed 150
+
+$$D \leq 150$$
+
+
+#### Step 4 : Non-Negativity
+
+<center>
+
+![](t2.png)
+
+</center>
+
+* AA cannot sell a negative number of seats
+
+    $$R \geq 0 ,  D \geq 0$$
+
+#### Problem Formulation
+
+* Maximize
+    + Total airline revenue
+    
+    $$617R + 238D$$
+
+* Subject to
+    + Seats sold cannot exceed capacity
+    
+    $$R + D \leq 166$$
+    + Seats sold cannot exceed demand
+    
+    $$R \leq 100, D \leq 150$$
+    + Seats sold cannot be negative
+    
+    $$R \geq 0, D \geq 0$$
+    
+#### Visualizing the Problem
+
+<center>
+
+![](vp1.png)
+
+</center>
+
+<center>
+
+![](vp2.png)
+
+</center>
+
+<center>
+
+![](vp3.png)
+
+</center>
+
+<center>
+
+![](vp4.png)
+
+</center>
+
+
+#### Feasible Space
+
+<center>
+
+![](fs1.png)
+
+</center>
+
+<center>
+
+![](fs2.png)
+
+</center>
+
+<center>
+
+![](fs3.png)
+
+</center>
+
+#### Marketing Decisions
+
+* Management is trying to figure out whether it would be beneficial to invest in marketing its fares
+
+* AA forecasts that its marketing effort is likely to attract one more unit of demand per $200 spent
+
+<center>
+
+![](mc.png)
+
+</center>
+
+#### Marketing Discount Fares
+
+<center>
+
+![](mf1.png)
+
+</center>
+
+<center>
+
+![](mf2.png)
+
+</center>
+
+<center>
+
+![](mf3.png)
+
+</center>
+
+<center>
+
+![](mf4.png)
+
+</center>
+
+<center>
+
+![](mf5.png)
+
+</center>
+
+#### Marketing Decision
+
+* Management is trying to figure out whether it would be beneficial to invest in marketing its fares
+
+* AA forecasts that its marketing effort is likely to attract one more unit of demand per $200 spent
+
+<center>
+
+![](md2.png)
+
+</center>
+
+#### Capacity Allocation
+
+* Management is trying to figure out whether it would be beneficial to allocate a bigger aircraft for the 6 hour JFK - LAX leg
+
+<center>
+
+![](ca.png)
+
+</center>
+
+#### Aircraft Capacity
+
+<center>
+
+![](ca2.png)
+
+</center>
+
+#### Capacity Allocation
+
+* Management is trying to figure out whether it would be beneficial to allocate a bigger aircraft for the 6 hour JFK - LAX leg
+
+<center>
+
+![](ca3.png)
+
+</center>
+
+### Connecting Flights
+
+#### Step 1: Decisions
+
+<center>
+
+![](cf1.png)
+
+</center>
+
+* Number of regular seats to sell
+
+$$R_{JFK-LAX} , R_{JFK-DFW} , R_{DFW-LAX}$$
+* Number of discount seats to sell
+
+$$D_{JFK-LAX} , D_{JFK-DFW} , D_{DFW-LAX}$$
+
+#### Step 2: Objective
+<center>
+
+![](cf1.png)
+
+</center>
+
+* Maximize total revenue
+
+$$428R_{JFK-LAX} + 190D_{JFK-LAX} + 642R_{JFK-DFW} + 224D_{JFK-DFW} + 512R_{DFW-LAX} + 190D_{DFW-LAX}$$
+
+#### Step 3: Constraints
+
+<center>
+
+![](cf1.png)
+
+</center>
+
+* AA cannot sell more seats than the aircraft capacity
+    + First leg - JFK-DFW
+    
+    $$R_{JFK-LAX} + D_{JFK-LAX} + R_{JFK-DFW} + D_{JFK-DFW} \leq 166$$
+    + Second leg - DFW-LAX
+    
+    $$R_{JFK-LAX} + D_{JFK-LAX} + R_{DFW-LAX} + D_{DFW-LAX} \leq 166$$
+* AA cannot sell more seats than the demand
+
+$$R_{JFK-LAX} \leq 80 , D_{JFK-LAX} \leq 120$$
+$$R_{JFK-DFW} \leq 75 , D_{JFK-DFW} \leq 100$$
+$$R_{DFW-LAX} \leq 60 , D_{DFW-LAX} \leq 110$$
+
+#### Step 4: Non-Negativity
+<center>
+
+![](cf1.png)
+
+</center>
+
+* AA cannot sell a negative number of seats
+
+$$R_{JFK-LAX} \geq 0 , D_{JFK-LAX} \geq 0$$
+$$R_{JFK-DFW} \geq 0 , D_{JFK-DFW} \geq 0$$
+$$R_{DFW-LAX} \geq 0 , D_{DFW-LAX} \geq 0$$
+
+### The Competitive Strategy of AA
+
+* Selling the right seats to the right customers at the right prices
+
+"**Revenue management** is the single most important technical development in transportation management since we entered the era of airline deregulation." 
+- Robert Crandall, former CEO of AA (~1985)
+
+
+"We estimate that revenue management has generated **$1.4 billion in incremental revenue** in the last three years." - Robert Crandall, former CEO of AA (~1985)
+
+### The Edge of Revenue Management
+
+* Sabre Holdings
+    + Built revenue management system for AA
+    + As of November 2012, ranked 133 among America's largest private companies with $3.15 billion in sales
+    + 400 airlines, 90,000 hotels, 30 car-rental companies
+
+* Today, companies prosper from revenue management
+    + Delta airlines increased annual revenue by $300 million
+    + Marriott hotels increased annual revenue by $100 million
+    
+    
+
+    
+    

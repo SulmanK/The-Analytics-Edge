@@ -1,0 +1,232 @@
+---
+title: 'Analytics Edge: Unit 8 - Radiation Therapy'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Radiation Therapy
+
+### Cancer
+* Cancer is the second leading cause of death in the United States, with an estimated **570,000 deaths** in 2013
+
+* Over **1.6 million new cases** of cancer will be diagnosed in the United States in 2013
+
+* In the world, cancer is also a leading cause of death - **8.2 million deaths** in 2012
+
+### Radiation Therapy
+
+* Cancer can be treated using radiation therapy (RT)
+
+* In RT, beams of high energy photons are fired into the patient that are able to kill cancerous cells
+
+* In the United States, about **half of all cancer patients** undergo some form of radiation therapy
+
+### History of Radiation Therapy
+
+* X-rays were discovered by Wilhelm Röntgen in 1895 (awarded the first Nobel Prize in Physics in 1901)
+    + Shortly after, x-rays started being used to treat skin cancers
+
+* Radium discovered by Marie and Pierre Curie in 1898 (Nobel Prize in Chemistry in 1911)
+    + Begun to used to treat cancer, as well as other diseases
+    
+* First radiation delivery machines (linear accelerators) developed in 1940
+
+* Computed tomography (CT) invented in 1971
+
+* **Invention of intensity-modulated radiation therapy (IMRT) in early 1980s**
+
+### IMRT
+* To reach the tumor, radiation passes through healthy issue, and damages both healthy and cancerous tissue
+
+* Damage to healthy tissue can lead to undesirable side effects that reduce post-treatment quality of life
+
+* We want the dose to "fit" the tumor as closely as possible, to reduce the dose to healthy tissues
+
+* In IMRT, the intensity profile of each beam is non-uniform 
+
+* By using non-uniform intensity profiles, the three-dimensional shape of the dose can better fit the tumor
+
+### Using Traditional Radiation Therapy
+
+<center>
+
+![](trt1.png)
+
+</center>
+
+### Using IMRT
+
+<center>
+
+![](trt2.png)
+
+</center>
+
+### Designing an IMRT Treatment
+
+* Fundamental problem:
+    + How should the beamlet intensities be selected to deliver a therapeutic dose to the tumor *and* to minimize damage to healthy tissue
+    
+### The Data
+
+* Treatment planning starts from a CT scan
+    + A radiation oncologist contours (draws outlines) around the tumor and various critical structures
+    + Each structure is discretized into voxels (volume elements) - typically 4 mm x 4 mm x 4 mm
+
+<center>
+
+![](ct1.png)
+
+</center>
+
+
+* From CT scan, can compute how much dose each beamlet delivers to every voxel
+
+### Small Example - 9 Voxels, 6 Beamlets
+
+<center>
+
+![](se1.png)
+
+</center>
+
+* Minimize total dose to healthy tissue (spinal + other)
+
+* Constraints: tumor voxels at least 7Gy (Gray) , spinal cord voxel at most 5Gy
+
+#### The Model
+
+<center>
+
+![](se2.png)
+
+</center>
+
+
+
+### A Head and Neck Example
+
+* We will test out this approach on a head-and-neck case
+      + Total of 132,878 voxels
+      + One target volume (9,777 voxels)
+      + Five critical structures: spinal cord, brain, brain stem, parotid glands, mandible (jaw)
+      + 5 beams; each beam ~60 beamlets (1cm x 1cm) for a total of 328 beamlets
+      
+#### Treatment Plan Criteria
+
+* Dose to whole tumor between 70Gy and 77Gy
+
+* Maximum spinal cord at most 45Gy
+    + Significant damage to any voxel will result in loss of function
+
+* Maximum brain stem dose at 54Gy
+
+* Maximum mandible dose at most 70Gy
+
+* Mean parotid gland dose at most 26Gy
+    + Parotid gland is a parallel structure: significant damage to any voxel does not jeopardize function of entire organ
+
+#### The Optimization Problem
+
+<center>
+
+![](opt1.png)
+
+</center>
+
+#### Solution
+
+<center>
+
+![](opt2.png)
+
+</center>
+
+
+#### Exploring Different Solutions
+
+* Mean mandible dose was 11.3Gy - how can we reduce this?
+
+* one approach: modify objective function
+    + Current objective is the sum of the total dose
+    
+    $$T_B + T_{BS} + T_{SC} + T_{PG} + T_{M}$$
+    + Change objective to
+    
+    $$T_B + T_{BS} + T_{SC} + T_{PG} + 10T_{M}$$
+    + Set mandible weight from 1 (current solution) to 10
+    
+#### New Solution
+
+<center>
+
+![](news.png)
+
+</center>
+
+#### Sensitivity
+* Another way to explore tradeoffs is to modify constraints
+    + For example: by relaxing the mandible maximum dose constraint, we may improve our total healthy tissue dose
+    + How much does the objective change for different constraints?
+    
+#### Shadow Prices
+
+<center>
+
+![](news2.png)
+
+</center>
+
+* Parotid gland and brain stem have shadow prices of zero
+      + Modifying these constraints is not beneficial
+
+* Mandible has highest shadow price
+      + If a slight increase in mandible dose is acceptable, total healthy tissue dose can be significantly reduced
+  
+### IMRT Optimization in Practice
+
+* Radiation machines are connected to treatment planning software that implements and solves optimization models (linear and other types)
+    + Pinnacle by Philips
+    + RayStation by RaySearch Labs
+    + Eclipse by Varian
+    
+### Extensions
+* Selection of beam angles
+    + Beam angles can be selected jointly with intensity profiles using **integer optimization** 
+
+* Uncertainty
+    + Often quality of IMRT treatments is degraded due to uncertain organ motion (e.g., in lung cancer, patient breathing)
+    + Can manage uncertainty using a method known as **robust optimization**
+
+### Efficiency
+* Manually designing an IMRT treatment is inefficient and impractical
+
+* Linear optimization provides an *efficient* and *systematic way of designing an IMRT treatment*
+    + Clinical criteria can be modeled using constraints
+    + By changing the model, treatment planner can explore tradeoffs
+    
+### Clinical Benefits
+* Ultimately, IMRT Benefits the patient
+    + In head and neck cancers, saliva glands were rarely spared prior to IMRT; optimized IMRT treatments spare saliva glands
+    + In prostate cancer, optimized IMRT treatments reduce toxicities and allow for higher tumor doses to be delivered safely
+    + In lung cancer, optimized IMRT reduces risk of radiation-induced pneumonia
+    

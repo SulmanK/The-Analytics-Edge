@@ -1,0 +1,118 @@
+---
+title: 'Analytics Edge: Unit 8 - Investment Management under Taxation '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/analytics edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Investment Management Under Taxation
+
+### Background Information on the Dataset
+Billions of shares of stock, or fractions of ownership in a business, are traded on the stock market every day. Over half of all adults in the United States own stocks and 1.2 billion people worldwide invest in the stock market. Many people invest in stocks to increase their wealth and to increase their earnings beyond their salary. If the business that you own stock in does well, then your stock value will increase and you will make money.
+
+An individual who owns stock can sell their shares, or a fraction of their shares, to get cash that can be used for a down payment on a home, to buy a new car, or for any other purchase. However, when you sell stock, you have to pay both a transaction fee and  tax on the money you gain. If you own many different stocks, you have to decide what stocks and how much to sell to make sure you have enough cash for your purchase. In this problem, we'll use linear optimization to decide which shares of stock and how many you need to sell in order to have enough cash to make your purchase, and to maintain a strong portfolio of stocks. 
+
+### Formulating the Problem
+Suppose that, last year, you purchased 150 shares of eight different stocks (for a total of 1200 shares). The spreadsheet Investment.ods for LibreOffice or OpenOffice, and Investment.xlsx for Microsoft Excel, lists the stocks that you purchased, the price you purchased them for last year, the current price, and the price estimate for next year.
+
+If you sell any shares, you have to pay a transaction cost of 1% of the amount transacted.
+
+In addition, you must pay a capital-gains tax at the rate of 30% on any capital gains at the time of the sale. For example, suppose that you sell 100 shares of a stock today at \$50 per share, which you originally purchased for \$30 per share. You would receive $5,000. However, you would have to pay capital-gains taxes of:
+$$0.30  ($5,000 - $3,000) = $600$$
+and you would have to pay: 
+$$0.01 * $5,000 = $50$$
+
+
+in transaction costs. Therefore, by selling 100 shares of this stock, you would have a net cashflow of 
+$$$5,000 - $600 - $50 = $4,350$$
+
+Note that none of the stocks decreased in value since the time of purchase, so we don't have to deal with capital losses.
+
+You would like to sell enough shares of stock today to generate \$10,000 to use as part of a down payment on a new home. You need to decide how many shares of which stocks to sell in order to generate $10,000, after taxes and transaction costs, while maximizing the estimated value of your stock portfolio next year. Let's formulate this as a linear optimization problem. 
+
+#### How many decision variables should your model have?
+
+We need one decision variable for each stock, representing the number of shares to sell of that stock. Since we have 8 stocks, there are 8 decision variables.
+
+#### What is the maximum value your decision variables can be? 
+
+You can't sell more shares that you own, and since you own 150 shares of each stock, the decision variables can't be any larger than 150.
+
+#### What is the minimum value your decision variables can be?
+
+Since you can't buy additional shares (giving the decision variables negative values) the minimum value the decision variables can be is 0.
+
+#### Your objective is to maximize the estimated value of your stock portfolio next year. To do this, you should sum the estimated value of each stock next year. Suppose you sell x shares of your stock in Microsoft. What is the estimated value of your Microsoft stock next year?
+
+$$$34.55 * (150-x)$$
+
+Since you will have (150 - x) shares next year (after selling x shares), the estimated value of your stock is $34.55(150 - x).
+
+#### You need to make sure you get $10,000 in cash from selling your stocks, after taxes and transaction costs. How much would you get in cash, after taxes and transaction costs, if you sell 50 shares of your Intel stock?
+
+$1154.71 after taxes and transaction costs
+
+### Analyzing the Solution
+
+#### In the optimal solution, which stocks do you sell at least one share of?
+
+Yahoo, Microsoft, and Intel.
+
+#### What is the objective value of the optimal solution (the estimated value of your portfolio of stocks next year)?
+
+The objective value after solving the problem is 26773.66271
+
+#### How many shares of stock in total should you sell to make sure you have enough cash, according to the optimal solution? (Assume that you can sell fractional shares.)
+
+367.7232981 shares were sold.
+
+
+### Adjusting the Formulation
+As an investor, you like having a portfolio of eight different stocks because it diversifies your investment. If one or two stocks do poorly this year, you won't worry as much because you have many other stocks. In the optimal solution for this problem, you sold all of your shares of some stocks, but you would like to keep at least half of the shares of each of your stocks.
+
+Adjust the formulation so that you sell no more than 75 shares of each stock, and solve it again.
+
+#### In the optimal solution, you sell at least one share of which of your stocks?
+
+The decision variables with non-zero values in the optimal solution are those corresponding to Yahoo!, General Electric, Microsoft, Cisco Systems, Inc, Intel, and Pfizer. To reach this solution, just change the upper bounds for the decision variables from 150 to 75 in the Solver.
+
+#### What is the objective value of the optimal soluion now?
+
+26468.54116 is the objective value found in solver.
+
+#### Even though your investment is worth a bit less next year by diversifying, you expect this diversification to help you long term.
+
+However, you notice that you expect the Yahoo! stock to decrease in value next year. So, while you would like to sell no more than 75 shares of your other stocks, you would like to sell exactly 100 shares of your Yahoo! stock. Adjust your formulation in LibreOffice again, and re-solve to get the new optimal solution. 
+
+##### You now sell at least one share of how many different stocks?
+
+You sell at least one share of Yahoo!, General Electric, Microsoft, Intel, and Pfizer, for a total of 5 different stocks.
+
+You should remove the upper bound of 75 for Yahoo!, and add an equality constraint stating that you should sell exactly 100 shares of your Yahoo! stock. 
+##### What is your estimated portfolio value next year?
+
+26507.52535 is the objective value found in solver.
+
+
+
+
+
+
