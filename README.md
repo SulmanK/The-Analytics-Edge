@@ -51,7 +51,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 8 : Investment Management under Taxation](http://rpubs.com/SulmanKhan/440464)
     * [Unit 8 : Filatoi Riuniti](http://rpubs.com/SulmanKhan/440474)
     * [Unit 8 : Gasoline Blending](http://rpubs.com/SulmanKhan/440481)
-    
+ * [Unit 9 : An Introduction to Integer Optimization](http://rpubs.com/SulmanKhan/443124)
     
 -Sulman Khan
 
