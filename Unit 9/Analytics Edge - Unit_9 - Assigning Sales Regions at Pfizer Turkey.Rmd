@@ -1,0 +1,109 @@
+---
+title: 'Analytics Edge: Unit 9 - Assigning Sales Regions at Pfizer Turkey '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Assigning Sales Regions at Pfizer Turkey
+
+### Background Information on the Dataset
+Pfizer, Inc. is one of the world's largest pharmaceutical companies. It was founded in 1849, and aims to discover, develop, and manufacture breakthrough medicines. These medicines are marketed and sold in more than 150 countries. In this problem, we'll focus on the branch of Pfizer in Turkey. Pfizer's immediate customers in Turkey are medical doctors (MDs) because the majority of its products are prescription drugs. 
+
+Pfizer pharmaceutical sales representatives (SRs) provide MDs with supply samples and information on indications for drugs and potential adverse effects. To do this, they maintain close relationships with MDs through regular visits. Each SR is assigned a territory, which is a list of MDs to be visited by that SR. Territories are formed by combining smaller regions, called bricks. For each brick, we have information on the sales data, number of MDs, and MD profiles. This information is then used to compute an index value for each brick, which captures various factors to show the workload of the brick in terms of the number of SRs required for it. For example, if the index value is 0.5, then the workload is estimated to be half of a full time workload. 
+
+Because of the dynamic structure of the market (MDs leave or move to the area, products become more or less popular, etc.), these index values change over time. Hence, the territories assigned to each SR should be periodically reconstructed to balance the workload between the SRs. We'll solve this re-assignment problem using integer optimization.
+
+### Formulating the Optimization Problem
+
+In Turkey, there are 1,000 bricks and 196 SRs. To reduce the problem size, we'll solve the problem for a single geographical district that has 22 bricks and 4 SRs.
+
+Since we want to assign each brick to an SR, we define a binary variable for each brick and SR pair. So we have binary decision variables \(x_{i,j}\), where \(x_{i,j}\)is equal to 1 if brick \(j\) is assigned to SR \(i\), and equal to 0 otherwise.
+
+#### How many decision variables are in our optimization problem? (Note that we are only solving the problem for the smaller geographical district.)
+
+Since we have 22 bricks and 4 SRs, we have 22 times 4, or 88 decision variables.
+
+#### Let \(d_{i,j}\) denote the distance between the center brick for SR \(i\) and the (center of the) brick \(j\) . Given our decision variables \(x_{i,j}\) , which of the following best describes our objective?
+
+We want to sum the distances between a SR's center brick and the bricks assigned to that SR. Decision variable \(x_{i,j}\) will be equal to 1 if brick \(j\) is assigned to SR \(i\), so by multiplying the distances by the decision variables, we will only sum the distances for the assigned bricks.
+
+#### We have three main types of constraints. The first is that each brick must be assigned to exactly one SR. Which of the following constraints models this restriction for brick 1?
+
+Since we want to assign each brick to exactly one SR, we need an equality contraint. Additionally, we want to sum over all 4 SRs, so the correct answer is the second to last one. The second answer sums over the first four bricks instead.
+
+#### The second main type of constraint tries to balance the workload between the SRs. The sum of the index values of the bricks of an SR correspond to his/her total workload and should be approximately 1. To model this, we'll constrain the workload of each SR to range between 0.8 and 1.2. Denote the index value of brick \(j\) by \(I_j\) . Which of the following constraints do we want to add to our model for SR 1?
+
+This is similar to the objective. We want to sum the index values for the bricks assigned to SR 1. By multiplying the decision variables by the index values, we get the total workload assigned to SR 1.
+
+#### The final set of constraints in our model constrains what we call "disruption", which is defined as the inclusion of new bricks in the territories of SRs. Suppose we have data \(N_{i,j}\) , which equals 1 if brick \(j\) is not currently assigned to SR \(i\) , and is equal to 0 if brick \(j\) is currently assigned to SR \(i\) . Which of the following constraints would force no more than 2 new bricks assigned to SR 1?
+
+Again, this is similar to the objective. We want to sum the number of bricks that are new assignments for SR 1. We can do this by multiplying the "new assignment" data by the decision variables.
+
+### Solving the Problem 
+
+The file PfizerReps.ods for LibreOffice or OpenOffice, and PfizerReps.xlsx for Microsoft Excel contains the data needed to solve this problem (the current assignment of bricks to SRs, the index values, and the distances). Using this data, set up and solve the problem as formulated in Part 1 using LibreOffice.
+
+#### What is the optimal objective value?
+
+If you solve the problem in Open Office, the objective value returned is 160.22.
+
+Suppose you put your decision variables in the cells B92:E113 (rows are labeled by the bricks, and columns are labeled by the SRs). 
+
+#### In the solution, brick 10 is assigned to which SR?
+
+If you look at the decision variable values for brick 10, you can see that there is a 1 in the column for SR 3, and zero for the other SRs. So brick 10 is assigned to SR 3.
+
+#### In the solution, how many new bricks does SR 2 have in her territory? (Note that we are not asking about total bricks here - just the number of bricks now assigned to SR 2 that were previously assigned to a different SR.)
+
+If you look at the left hand side constraint value for the disruption constraint corresponding to SR 2, you can see that it has value 1. This means that SR 2 has one new brick in her territory.
+
+#### In the solution, what is the total workload of SR 1? Remember that the sum of the index values of the bricks of an SR correspond to his/her total workload.
+
+The left hand side of the workload constraint for SR 1 is equal to 0.9206. This is the total workload of SR 1.
+
+### Changing the Restrictions 
+In the current problem, we allow the workload of each SR to range from 0.8 to 1.2. In the optimal solution, the workload of the four SRs ranges from 0.837 to 1.1275. This is a pretty large range, and we would like to see if we can balance the workload a little better.
+
+In LibreOffice, change the constraints so that the workload for each SR must be between 0.9 and 1.1, and then resolve the problem.
+
+#### What is the new objective value?
+If you change the constraints for the workload to have lower bounds of 0.9 and upper bounds of 1.1 and resolve the problem, the objective changes to 171.68.
+
+
+#### Is this smaller or larger than the objective value in the original problem, and why?
+
+The objective value is larger, and we are minimizing, so the correct answer is the last one.
+
+#### Now, keeping the workload constraints bounded between 0.9 and 1.1, increase the disruption bounds to 3 (meaning that each SR can have up to three new bricks assigned to them). What is the new objective value?
+
+If you change the disruption constraints to have a right-hand-side of 3 and resolve the model, you can see that the objective function value is 162.43. By making one constraint more restrictive and another less restrictive, we were able to maintain a good solution, and this objective value is very similar to the original one.
+
+#### Suppose the head of logistics at Pfizer would like to find a solution with an objective value very similar to that of the original solution (the very first solution we found in this problem), but would like to decrease the disruption bounds to 1. What could he do to keep the objective value close to the original value (the very first objective function value we found)?
+
+Since we made one set of constraints more restrictive, we should make another set of constraints less restrictive. The assignment constraints can't become more or less restrictive since they are equality constraints, so the correct answer is the last one.
+
+#### Which restrictions or assumptions made in this problem could actually be relaxed to get a better solution (a solution that would minimize the distance traveled by the SRs)?
+
+The center brick of each SR could also be re-assigned to try and better center an SR in their territory.
+We could solve for a larger geographical area at once (more bricks and more SRs) so there are more possible assignments.
+We could assign a brick to more than one SR so they could share the workload. 
+

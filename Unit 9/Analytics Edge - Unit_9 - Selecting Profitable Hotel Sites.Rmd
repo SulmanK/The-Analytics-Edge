@@ -1,0 +1,100 @@
+---
+title: 'Analytics Edge: Unit 9 - Selecting Profitable Hotel Sites '
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Selecting Profitable Hotel Sites
+
+### Background Information on the Dataset
+La Quinta Motor Inns is a mid-sized hotel chain headquartered in San Antonio, Texas. They are looking to expand to more locations, and know that selecting good sites is crucial to a hotel chain's success. Of the four major marketing considerations (price, product, promotion, and location), location has been shown to be one of the most important for multisite firms.
+
+Hotel chain owners who can pick good sites quickly have a distinct competitive advantage, since they are competing against other chains for the same sites. La Quinta used data on 57 existing inn locations to build a linear regression model to predict "Profitability", computed as the operating margin, or earnings before interest and taxes divided by total revenue. They tried many independent variables, such as "Number of hotel rooms in the vicinity" and "Age of the Inn". All independent variables were normalized to have mean zero and standard deviation 1. 
+
+The final regression model is given by:
+
+Profitability = 39.05 - 5.41\*(State Population per Inn) + 5.86\*(Price of the Inn) - 3.09\*(Square Root of the Median Income of the Area) + 1.75*(College Students in the Area)
+
+The \(R^2\) of the model is 0.51.
+
+In this problem, we'll use this regression model together with integer optimization to select the most profitable sites for La Quinta. 
+
+### Formulating the Optimization Problem
+
+#### According to the regression equation given above, which variables positively affect Profitability?
+
+The variables with positive coefficients in the regression equation positively affect profitability: Price of the Inn, and College Students in the Area.
+
+#### Using the regression equation, what is the predicted profitability of hotel 1?
+
+By substituting the data for hotel 1 into the regression equation, we get that:
+
+Profitability = 39.05 - 5.41\*(-1.00) + 5.86\*(-0.30) - 3.09\*(-0.81) + 1.75\*(-0.54) = 44.24
+
+#### Which hotel has the highest predicted profitability?
+
+Hotel 2 has the highest predicted profitability of 53.38.
+
+#### Which hotel has the lowest predicted profitability?
+
+Hotel 8 has the lowest predicted profitability of 23.45.
+
+#### How many hotels would we purchase with this approach?
+
+We would start by buying hotel 2 (the most profitable hotel). This hotel costs $10,000,000, which is our entire budget. Thus, we would buy one hotel.
+
+#### What would our total predicted profitability be? (This is the sum of the predicted profitability of all hotels we purchase.)
+
+Since we just bought one hotel (hotel 2), our total predicted profitability is just the profitability of hotel 2, which is 53.38.
+
+### An Optimization Approach 
+Now, build an optimization model in your spreadsheet to select hotels. The decision variables are whether or not a hotel is selected (binary variables). The objective is to maximize the total predicted profitability. We have two constraints: the decision variables should be binary, and the total cost should not exceed the budget of $10,000,000. Formulate and solve this model in LibreOffice.
+
+#### What is the objective value of the solution?
+
+Our formulation in LibreOffice has 16 decision variables (one for each hotel) and one contraint (the budget). The objective is the sumproduct of the decision variables with the profitability. If we formulate and solve this problem, the objective value of the solution is 269.925.
+
+#### How many hotels are selected in the solution?
+
+Seven hotels have decision variables equal to 1 in the solution.
+
+#### How many hotels located in South Lake Tahoe are selected in the solution?
+
+Hotels 10-16 are located in South Lake Tahoe, and 6 of these have decision variables equal to 1 in the solution.
+
+#### La Quinta thinks that buying too many hotels in one city is probably not a good idea, and would prefer to diversify in other cities, even though it will decrease the sum of the predicted profitability. Add a constraint to limit the number of hotels selected in South Lake Tahoe to 2.
+
+##### What is the objective value of the solution now?
+
+If we add a constraint to limit the number of hotels in South Lake Tahoe (SUM(I13:I19) less than or equal to 2) and resolve the problem, the objective value of the solution is 205.7.
+
+##### How many hotels (in total) are selected in the solution now?
+
+Now, six decision variables have value 1 in the solution.
+
+##### In which cities do we buy at least one hotel?
+
+The hotels with decision variables equal to 1 are located in Eureka, Fresno, Los Angeles, and South Lake Tahoe. The only city in which we do not buy a hotel is Long Beach.
+
+#### In this problem, we compared the greedy approach with an optimization approach, and saw that the optimization approach was much better. This is true in many situations, but not always. In which of the following situations would the greedy approach perform as well as the optimization approach? 
+
+If we want to maximize the average profitability, then it is always optimal to select only the hotel that is the most profitable. Additionally, if we don't have a budget constraint and instead have a constraint that we can only select N hotels, it is optimal to just select the N most profitable hotels. So in the first two situations, the greedy approach would perform as well as the optimization approach. In the third situation, the optimization approach would still perform much better than the greedy approach.

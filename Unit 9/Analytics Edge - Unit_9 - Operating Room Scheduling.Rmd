@@ -1,0 +1,138 @@
+---
+title: 'Analytics Edge: Unit 9 - Operating Room Scheduling'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Making Hosptials Run Smoothly
+
+### Operating Room Schedules
+
+* Hospitals have a limited number of ORs.
+
+* Operating room managers must determine a weekly schedule assigning ORs to different departments in the hospitals.
+
+### Difficulties
+
+* Creating an acceptable schedule is a highly political process within the hospital
+
+* Surgeons are frequently paid on a fee-for-service basis, so changing allocated OR hours directly affects their income
+
+* The operating room manager's proposed schedule must strike a delicate balance between all the surgical departments in the hospital
+
+### Logistical Issues
+
+* Operating rooms are staffed in 8 hour blocks.
+
+* Each department sets their own target number of allocation hours, which may not be integer.
+
+* Departments may have daily and weekly requirements:
+    + EX) Gynecology needs at least 1 OR per day
+    + EX) Ophthalmology needs at least 2 ORs per week
+    + EX) The oral surgeon is only present on Tuesdays and Thursdays.
+ 
+### Case study: Mount Sinai Hospital
+
+* Has 10 ORs which are staffed Monday - Friday
+    + 10 ORs x 5 days x 8 hours/day = 400 hours to assign
+
+* Must divide these 400 hours between 5 departments:
+
+<center>
+
+![](h1.png)
+
+</center>
+
+### Problem Data
+
+* Number of surgery teams from each department available each day:
+
+<center>
+
+![](h2.png)
+
+</center>
+
+* Maximum number of ORs required by each department each day:
+
+<center>
+
+![](h3.png)
+
+</center>
+
+### Additional Problem Data
+
+* Weekly requirement on number of ORs each department requires:
+
+<center>
+
+![](h4.png)
+
+</center>
+
+### The Traditional Way
+
+* Before the integer optimization method was implemented at Mount Sinai in 1999, the OR manager used graph paper and a large eraser to try to assign the OR blocks
+
+* Any changes were incorporated by trial and error
+
+* Draft schedule was circulated to all surgical groups
+
+* Incorporating feedback from one department usually meant altering another group's schedule, leading to many iterations of this process
+
+### Optimization Problem
+
+* Decisions
+    + How many ORs to assign each department on each day.
+    + Integer decision variables \(x_{jk}\) represent the number of operating rooms department \(j\) is allocated on day \(k\).
+    
+### Objective
+
+* Maximize % of target allocation hours that each department is actually allocated.
+
+* If target allocation hours are \(t_J\) for department \(j\), then we want to maximize the sum of \((8 * x_{jk}) \div t_j\) over all departments and days of the week.
+    + Ex) If otolaryngology has a target of 37.3 hours per week and we allocate them 4 ORs then their % of target allocation hours = \((8 * 4) \div 37.3 = 85.8\%\)
+
+### Constraints
+
+* At most 10 ORs are assigned every day
+
+* The number of ORs allocated to a department on a given day cannot exceed the number of surgery teams that department has available that day
+
+* Meet department daily minimums and maximums
+
+* Meet department daily weekly minimums and maximums
+
+
+### Constraints
+
+* \(x_{OP,M} + x_{GY,M} + x_{OS,M} + x_{OT,M} + x_{GY,M} \leq 10\)
+
+* \(0 \leq x_{GY,F} \leq 3\)
+* \(0 \leq x_{OS,W} \leq 0\)
+
+* \(0 \leq x_{GS,T} \leq 8\)
+
+* \(3 \leq x_{OP,M} + x_{OP,T} + x_{OP,W} + x_{OP,F} \leq 6\)
+

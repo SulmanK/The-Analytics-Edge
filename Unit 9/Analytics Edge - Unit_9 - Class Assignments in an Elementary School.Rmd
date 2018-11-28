@@ -1,0 +1,81 @@
+---
+title: 'Analytics Edge: Unit 9 - Class Assignments in an Elementary School'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Class Assignments in an Elementary School
+
+### Background Information on the Dataset
+The Salanter Akiba Riverdale (SAR) Academy is a coeducational, private Modern Orthodox Jewish day school located in New York City. Every summer, the SAR Academy must create class assignments for their elementary school students. Each grade of 80-100 students must be divided into four different classes. Requests for assignments are made by parents, teachers, and school therapists. These requests include pairs of students that should be placed together, pairs of students that should not be placed together, and requests for students to be placed in classes that better suit their academic needs. These requests often conflict with each other, and it falls on the administration to prioritize which requests should be fullfilled over others. 
+
+In this exercise, we 'll solve a simplified version of the problem faced by the SAR Academy with 40 students. The full optimization problem is currently being used to assist administrators at the SAR Academy. 
+
+### Solving the Basic Problem 
+The parents or guardians of each of the 40 students are asked to submit preferences for class 1 or class 2. These preferences often depend on the teaching style of the teachers, the teachers older siblings have had in the past, and characteristics of the class (one class is called an "inclusion class", which is better for students with academic needs). The parents give a ranking of 1 to the class they prefer (their first choice), and a ranking of 2 to their second choice. The data for this problem is in the spreadsheet ClassAssignments.ods for LibreOffice or OpenOffice, and ClassAssignments.xlsx for Microsoft Excel.
+
+Download this file, and then formulate and solve the basic assignment problem. The decision variables are very similar to those in the Pfizer Sales Representatives problem. We want to assign each student to either Class 1, or Class 2. Our objective is to adhere to the preferences of the parents as much as possible (note that since smaller numbers in the preferences are better, we will be minimizing in this problem). We have two types of constraints: (1) each student must be assigned to exactly one class, and (2) there should be exactly 20 students in each class. 
+
+#### What is the optimal objective value?
+There are 80 different decision variables (two for each student). For this explanation, let's suppose that you added the decision variables in cells G5:H44.
+
+The objective is the sumproduct of these decision variables with the preferences, SUMPRODUCT(G5:H44, B5:C44), and we are minimizing the objective. 
+
+#### How many students received their first choice class (according to the parent preferences)?
+
+The objective value is 42, which means that 38 students received their first choice and two students received their second choice (1*38 + 2*2 = 42).
+
+#### We would like to better balance the boy/girl ratio in the classes. Add the necessary constraint(s) to your model to limit the number of boys in each class to no more than 12, and then resolve the model. What is the objective value now?
+
+We need to add two constraints to our model. One that constrains the sum of the decision variables for Students 1-23 in class one to be less than or equal to 12, and a second to constrain the sum of the decision variables for Students 1-23 in class two to be less than or equal to 12. 
+
+#### Now how many students received their first choice class?
+
+The objective value is 46, which means that 34 students received their first choice and 6 students received their second choice (1\*34 + 6*2 = 46).
+
+### Adding Logical Constraints 
+
+In the next few questions, we'll add some logical constraints to our model that capture additional preferences of parents, teachers, and school therapists. A constraint added in one part will be used in all subsequent parts.
+
+Students 10 and 11 are twins, and the school has a policy that twins must be placed in different classes. Add the necessary constraint(s) to implement this policy, and solve the model again. 
+
+#### What is the objective value now?
+
+We need to add two constraints to our model. For this explanation, let's suppose that you added the decision variables in cells G5:H44, so Students 10 and 11 are in rows 14 and 15. Then we need to add the constraints: (1) G14 + G15 <= 1, and (2) H14 + H15 <= 1. This prevents students 10 and 11 from being in the same class. If we add these constraints and resolve the model, the solution changes, but the objective value is still 46.
+
+#### Students 4, 9, 15, 25, 30, and 36 are all from the same neighborhood. The school would like to put at least 2 students from this neighborhood in each class. Add the necessary constraint(s) to implement this policy, and solve the model again. What is the objective value now?
+
+For this explanation, let's suppose that you added the decision variables in cells G5:H44.
+
+We need to add two constraints to our model: (1) G8 + G13 + G19 + G29 + G34 + G40 >= 2, and (2) H8 + H13 + H19 + H29 + H34 + H40 >= 2. These force each class to have at least 2 students from this neighborhood. After adding these constraints and resolving the model, the solution changes but the objective value stays at 46.
+
+#### The school therapist strongly recommends that students 20 and 21 are placed in the same classroom, that student 1 is placed in classroom 2, and that student 40 is placed in classroom 2. Add the necessary constraint(s) to implement this policy, and solve the model again. What is the objective value now?
+
+For this explanation, let's suppose that you added the decision variables in cells G5:H44.
+
+We need to add four constraints: (1) G24 = G25, (2) H24 = H25, (3) H5 = 1, and (4) H44 = 1. If we add these constraints and resolve the model, the objective value remains at 46.
+
+#### How has the objective function value changed in this part, and what does this tell us?
+
+The objective value has remained the same after adding each set of logical constraints. This means that there are many solutions that have this objective function value, so the objective value is not very sensitive to adding logical constraints. 
+
+
