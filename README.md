@@ -57,6 +57,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 9 : Selecting Profitable Hotel Sites](http://rpubs.com/SulmanKhan/443639)
     * [Unit 9 : Assigning Sales Regions at Pfizer Turkey](http://rpubs.com/SulmanKhan/443643)
     * [Unit 9 : Class Assignments in an Elementary School](http://rpubs.com/SulmanKhan/443646)
+ * [Final Exam : Estimating AirBnB Prices](http://rpubs.com/SulmanKhan/443661)
 
 
 
