@@ -54,6 +54,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
  * [Unit 9 : An Introduction to Integer Optimization](http://rpubs.com/SulmanKhan/443124)
     * [Unit 9 : eHarmony](http://rpubs.com/SulmanKhan/443134)
     * [Unit 9 : Operating Room Scheduling](http://rpubs.com/SulmanKhan/443143)
+    * [Unit 9 : Selecting Profitable Hotel Sites](http://rpubs.com/SulmanKhan/443639)
 
 
 -Sulman Khan
