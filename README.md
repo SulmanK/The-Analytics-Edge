@@ -59,7 +59,7 @@ These are published under my [RPubs repository](http://rpubs.com/SulmanKhan)
     * [Unit 9 : Class Assignments in an Elementary School](http://rpubs.com/SulmanKhan/443646)
  * [Final Exam : Estimating AirBnB Prices](http://rpubs.com/SulmanKhan/443661)
  * [Final Exam : Predicting Customer Churn](http://rpubs.com/SulmanKhan/444033)
-
+ * [Final Exam : Understanding Movie Preferences](http://rpubs.com/SulmanKhan/444045)
 
 -Sulman Khan
 
