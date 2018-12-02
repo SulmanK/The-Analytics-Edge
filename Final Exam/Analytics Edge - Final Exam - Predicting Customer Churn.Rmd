@@ -1,0 +1,313 @@
+---
+title: 'Analytics Edge: Final Exam - Predicting Customer Churn'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Predicting Customer Churn
+
+### Background Information on the Dataset
+
+Customer churn is the loss of customers.  Many businesses use predictions of customer churn as a key business metric because the cost of acquiring new customers is much higher than the cost of retaining existing customers.
+
+We obtained a dataset from a telecommunications company (downloaded in October 2018 from https://www.ibm.com/communities/analytics/watson-analytics-blog/predictive-insights-in-the-telco-customer-churn-data-set/), which comprised demographic and account information on 7,032 customers.  A subset of the variables are included in the dataset below.
+
+Dataset: telco-churn.csv
+
+Here is a detailed description of the variables:
+
+
+
+* **gender**: the gender of the customer (Female or Male).
+
+* **SeniorCitizen**: 1 if the customer is a senior citizen, 0 otherwise
+
+* **Partner**: whether the customer has a partner
+
+* **Dependents**: whether the customer has dependents
+    tenure: how long the customer has been with the company (in months)
+    
+* **PhoneService**: whether the customer has phone service
+
+* **InternetService**: what type of internet service the customer has (DSL, Fiber optic, or No)
+
+* **Contract**: what type of contract the customer has (Month-to-month, One year, Two year)
+
+* **PaperlessBilling**: whether the customer has set up paperless billing
+
+* **PaymentType**: how the customer makes payments (Bank transfer (automatic), Credit card (automatic), Electronic check, Mailed check)
+
+* **MonthlyCharges**: how much money the customer is charged a month
+
+* **TotalCharges**: how much the customer has been charged over their tenure
+
+* **Churn**: 1 if the customer has left the business, 0 otherwise
+
+In this problem, we will use various classification methods to try to predict customer churn.
+
+### Exploratory Data Analysis
+
+Use the read.csv function to load the contents of telco-churn.csv into a data frame called customers. 
+
+```{r}
+# Read the dataset
+customers = read.csv("telco-churn.csv")
+```
+
+#### How many customers churned?
+```{r}
+# Calculate the number of customers that have churned
+table(customers$Churn)
+```
+
+1869 customers have churned.
+
+#### What is the most common type of internet service in the dataset?
+
+```{r}
+# Tabulate the amount of customers for each internet service
+table(customers$InternetService)
+```
+
+Fiber optic is the most common type of internet service in the dataset.
+
+#### What is the mean monthly charges amongst customers with month-to-month contracts?
+
+```{r}
+# Tabulate the mean monthly chargers amongst customers with month-to-month contracts
+tapply(customers$MonthlyCharges, customers$Contract =="Month-to-month", mean)
+```
+
+66.39849 is the mean monthly charges amongst customers with month-to-month contracts.
+
+
+### Simple Logistic Regression 
+
+Set your random seed to 1 and create a training and test split using the sample.split() function in the caTools library, with 70% of the observations in the training set and 30% in the testing set.
+
+```{r}
+set.seed(1)
+library(caTools)
+split = sample.split(customers$Churn, SplitRatio = 0.7)
+train = subset(customers, split ==TRUE)
+test = subset(customers, split == FALSE)
+```
+
+
+
+#### Why do we use the sample.split() function?
+It balances the dependent variable between the training and testing sets
+
+#### What is the (test) accuracy of this baseline model?
+```{r}
+# Tabulate the accuracy of the baseline model
+z = table(test$Churn)
+# Compute Accuracy
+z[1]/sum(z)
+```
+
+Accuracy = 0.7341232. 
+
+#### What is the (test) true positive rate of this baseline model?
+
+```{r}
+# Tabulate true postiive rate of this baseline model
+z = table (test$Churn)
+# Compute accuracy
+z[2]/sum(z)
+```
+True Positive Rate = 0.7341232.
+
+#### What is the (test) false positive rate of this baseline model?
+
+```{r}
+# Tabulate false postiive rate of this baseline model
+z = table (test$Churn)
+# Compute accuracy
+z[1]/sum(z)
+```
+False Positive Rate = 0.2658768
+
+#### Train a logistic regression model using tenure as the independent variable. What is the coefficient of tenure?
+
+```{r}
+# Train a logistic regression
+ChurnLog = glm(Churn ~ tenure,  data=train, family=binomial)
+summary(ChurnLog)
+```
+
+Tenure = -0.039493 
+
+#### Using your logistic regression model, obtain predictions on the test set. Then, using a probability threshold of 0.5, create a confusion matrix for the test set. What is the accuracy of your logistic regression model?
+
+```{r}
+# Make predictions
+predictTrain = predict(ChurnLog, newdata = test, type="response")
+# Confusion matrix
+table(test$Churn, predictTrain > 0.5)
+z = table(test$Churn, predictTrain > 0.5)
+# Compute Accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.756872
+
+
+#### What is the true positive rate of your logistic regression model?
+```{r}
+# True Positive Rate
+z[4]/(z[4]+z[2])
+```
+
+True Positive Rate = 0.2121212
+
+#### What is the false positive rate of your logistic regression model?
+```{r}
+# False Positive Rate
+z[3]/(z[3]+z[1])
+```
+
+False Positive Rate = 0.04583602
+
+#### Suppose we wanted to to lower the prediction threshold (currently 0.5). Which metrics would be guaranteed to either improve or stay the same?
+
+### Adding more variables
+
+Train a logistic regression model now using all of the variables in the training set. 
+
+```{r}
+# Train a logistic regression
+ChurnLog2 = glm(Churn ~ .,  data=train, family=binomial)
+```
+
+#### Which of the following variables are significant at a level of 0.05 or less?
+
+```{r}
+# Summary of logistic regression
+summary(ChurnLog2)
+```
+
+tenure is significant.
+
+#### How would you interpret the coefficient of SeniorCitizen in the model?
+When the customer is a senior citizen, the odds of the customer churning are 18.8% higher than if the customer is not. 
+
+#### Using your new logistic regression model, obtain predictions on the test set. Then, using a probability threshold of 0.5, create a confusion matrix for the test set. What is the accuracy of your logistic regression model?
+```{r}
+# Make predictions
+predictTrain = predict(ChurnLog2, newdata = test, type="response")
+# Confusion matrix
+table(test$Churn, predictTrain > 0.5)
+z = table(test$Churn, predictTrain > 0.5)
+# Compute Accuracy
+sum(diag(z))/sum(z)
+```
+
+Accuracy = 0.8094787
+
+#### AUC
+```{r}
+# Calculate AUC
+library(ROCR)
+
+pred = prediction(predictTrain, test$Churn)
+
+as.numeric(performance(pred, "auc")@y.values)
+```
+
+AUC = 0.8435803
+
+### CART
+
+Set the random seed to 2.
+
+Then use the caret package and the train function to perform 10-fold cross validation with the training data set to select the best cp value for a CART model that predicts the dependent variable Churn using all of the possible independent variables. Select the cp value from a grid consisting of the 50 values 0.001, 0.002, ..., 0.05.
+
+Remember to convert the Churn column to a factor variable. If you have called your training set trainset, use the following code:
+
+trainset\$Churn = as.factor(trainset$Churn)
+Important Note: The train() function in caret does not handle factor variables well when they are used in a formula via the method that was shown in the recitation (e.g. Churn ~ . ). Because there are many factor variables in this dataset, please use the following workaround (assuming you have called your training set trainset) to cross-validate properly:
+
+cv = train(y = trainset$Churn, x = subset(trainset, select=-c(Churn)), method = "rpart", trControl = ..., tuneGrid = ...)
+
+where the trControl and tuneGrid arguments can be handled as you have done throughout the course (recall that we are performing 10-fold cross-validation on cp values 0.001, 0.002, ..., 0.05).
+
+```{r}
+# Convert to a factor variable
+train$Churn = as.factor(train$Churn)
+# Set random seed
+set.seed(2)
+# Cross-Validation
+library(caret)
+library(e1071)
+
+# Define cross-validation experiment
+numFolds = trainControl( method = "cv", number = 10 )
+cpGrid = expand.grid( .cp = seq(0.001,0.05,0.001)) 
+
+# Perform the cross validation
+cv = train(y = train$Churn, x = subset(train, select=-c(Churn)), method = "rpart", trControl = numFolds, tuneGrid = cpGrid)
+
+# Create a new CART model
+ChurnTreeCV = rpart(Churn ~ ., data = train, method="class", cp = 0.005)
+
+```
+
+#### Which of the following variables appear in the tree?
+```{r}
+# CART Tree
+prp(ChurnTreeCV)
+```
+
+Contract and tenure are presented in the tree.
+
+#### What is the (test) accuracy of your CART model?
+```{r}
+# Make predictions
+PredictCV = predict(ChurnTreeCV, newdata = test, type = "class")
+z = table(test$Churn, PredictCV)
+# Compute Accuracy
+sum(diag(z))/sum(z)
+
+```
+
+Accuracy = 0.7905213
+
+#### What is the (test) true positive rate of your CART model? 
+```{r}
+# True Positive Rate
+z[4]/(z[4]+z[2])
+```
+
+True Positive Rate = 0.5846702
+
+#### What is the (test) false positive rate of your CART model?
+```{r}
+# False Positive Rate
+z[3]/(z[3]+z[1])
+```
+
+False Positive Rate = 0.1349258
+
+#### What does the CART model predict for customer with a one-year contract and a tenure of 12?
+
+From the CART tree, the customer doesn't churn (0)

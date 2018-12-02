@@ -1,0 +1,367 @@
+---
+title: 'Analytics Edge: Final Exam - Estimating AirBnB Prices'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Estimating AirBnB Prices
+
+### Background Information on the Dataset
+
+AirBnB is an online marketplace that allows members to offer or arrange lodging (primarily homestays) or tourism experiences. There are millions of listings across in cities across the world, such as London, Paris, and New York. In this problem, we would like to understand the factors that influence the price of a listing.
+
+To derive insights and answer these questions, we take a look at listing data released by AirBnB (downloaded in September 2018 from http://insideairbnb.com/get-the-data.html).  We specifically focus on apartments listed in six representative neighborhoods of Boston, MA.  Our data has a total of 12 columns and 1693 observations, split across a training set (1187 observations) and a test set (506 observations).  Each observation corresponds to a different listing.
+
+Training data: airbnb-train.csv
+Test data: airbnb-test.csv
+
+Here is a detailed description of the variables:
+
+* **id**: A number that uniquely identifies the listing.
+
+* **host_is_superhost**: Whether a host is a "superhost," meaning they satisfy AirBnB's criteria for high-quality listings, high response rate, and reliability.
+
+* **host_identity_verified**: Whether the host has verified their identity with AirBnB, which is intended to promote trust between hosts and guests.
+neighborhood: The neighborhood that the listing is located in (Allston, Back Bay, Beacon Hill, Brighton Downtown, or South End.
+
+* **room_type**: The type of room provided in the listing (Entire home/apt, Private room, or Shared room).
+
+* **accommodates**: The number of people that the listing can accommodate.
+
+* **bathrooms**: The number of bathrooms in the listing.
+
+* **bedrooms**: The number of bedrooms in the listing.
+
+* **beds**: The number of beds in the listing.
+price: The price to stay in the listing for one night.
+
+* **logprice**: The natural logarithm of the price variable.
+
+* **logacc**: The natural logarithm of the accommodates variable.
+
+### Exploratory Data Analysis 
+
+Load airbnb-train.csv into a data frame called train.
+
+```{r}
+# Read in the  training dataset
+train = read.csv("airbnb-train.csv")
+```
+
+#### How many rows are in the training dataset?
+
+```{r}
+# Calculate the number of rows in the training dataset
+nrow(train)
+```
+
+1187 rows.
+
+#### What is the mean price in the training dataset? 
+
+```{r}
+# Find the mean price in the training set
+mean(train$price)
+```
+
+212.0868 is the mean price in the training dataset.
+
+#### What is the maximum price in the training dataset?
+
+```{r}
+# Find the max price in the training set
+max(train$price)
+```
+
+999 is the max price in the training dataset.
+
+#### What is the neighborhood with the highest number of listings in the training dataset?
+
+```{r}
+# Tabulate the number of listings for each neighborhood
+z = table(train$neighborhood)
+kable(z)
+```
+
+Back Bay has the highest number of listings in the training dataset.
+
+#### What is the neighborhood with the highest average price in the training dataset?
+
+```{r}
+# Tabulate the neighborhood with the highest average price in the training dataset
+tapply(train$price, train$neighborhood, mean)
+```
+
+Downtown has the highest average pricing in the training dataset.
+
+### Simple Linear Regression 
+
+For the rest of this problem, we will be working with log(price) and log(accommodates), which helps us manage the outliers with excessively large prices and accommodations. The values of log(price) and log(accommodates) are found in the columns logprice and logacc, respectively.
+
+Load airbnb-test.csv into a data frame called test.
+```{r}
+# Load testing dataset
+test = read.csv("airbnb-test.csv")
+```
+
+#### What is our "baseline" linear regression model?
+
+Our baseline model is the mean log(price) of the training set
+
+#### What is the value of log(price) that our baseline model predicts?
+
+```{r}
+# Baseline model prediction
+baseline = mean(train$logprice)
+baseline
+```
+
+5.158113 is the value our baseline model predicts.
+
+
+#### What is the correlation between log(price) and log(accommodates) in the training set?
+
+```{r}
+# Compute the correlation between log(price) and log(accomodates)
+cor(train$logacc, train$logprice)
+```
+
+0.5366265 is the correlation between log(price) and log(accommodates)
+
+### Create a linear model that predicts log(price) using log(accommodates). What is the coefficient of log(accommodates)?
+
+```{r}
+# Linear regression model
+lreg1 = lm(logprice ~ logacc, data = train)
+# Summary of linear regression model
+summary(lreg1)
+```
+
+0.70348 is the coefficient of log(accommodates)
+
+### What is the R^2^ on the test set?
+```{r}
+# Make predictions using the linear regression model on the test set
+predTest = predict(lreg1, newdata = test)
+# SSE
+SSE = sum((predTest - test$logprice)^2)
+SSE
+# RMSE
+RMSE = sqrt(mean((predTest - test$logprice)^2))
+RMSE
+# Baseline
+baseline = mean(train$logprice)
+baseline
+# SSE of baseline model on testing set
+SSEb = sum((baseline - test$logprice)^2)
+SSEb
+# R^2
+Rsquared = 1 - SSE/SSEb
+Rsquared
+```
+
+R^2^ = 0.2956862.
+
+### Adding More Variables 
+
+As good practice, it is always helpful to first check for multicollinearity before running larger models.
+
+Examine the correlation between the following variables: 
+
+```{r}
+# Compute correlations amongst all variables
+cor(train$host_is_superhost, train$host_identity_verified)
+cor(train$host_is_superhost, train$bedrooms)
+cor(train$bedrooms, train$logacc)
+cor(train$beds, train$logacc)
+cor(train$bathrooms, train$logacc)
+cor(train$bedrooms, train$bathrooms)
+cor(train$bedrooms, train$beds)
+```
+
+Create a linear model that predicts log(price) using the following variables:
+
+log(accommodates), host_identity_verified, host_is_superhost, bedrooms, bathrooms, room_type, and neighborhood.
+
+We have removed beds because of concerns about multicollinearity.
+
+```{r}
+# Create linear regression model
+lreg2 = lm(logprice ~ logacc + host_identity_verified + host_is_superhost + bedrooms + bathrooms + room_type + neighborhood, data = train)
+# Summary of linear regression model
+summary(lreg2)
+```
+
+#### What is the value of the intercept?
+
+Intercept =  4.45230
+
+#### What is the R^2^ on the test set
+```{r}
+# Make predictions using the linear regression model on the test set
+predTest = predict(lreg2, newdata = test)
+# SSE
+SSE = sum((predTest - test$logprice)^2)
+SSE
+# RMSE
+RMSE = sqrt(mean((predTest - test$logprice)^2))
+RMSE
+# Baseline
+baseline = mean(train$logprice)
+baseline
+# SSE of baseline model on testing set
+SSEb = sum((baseline - test$logprice)^2)
+SSEb
+# R^2
+Rsquared = 1 - SSE/SSEb
+Rsquared
+```
+
+
+R^2^ = 0.6072919
+
+
+### Interpreting Linear Regression 
+
+#### Which of the following variables are significant at a level of 0.001 (p-value below 0.001)?
+
+```{r}
+# Summary of linear regression model
+summary(lreg2)
+```
+
+host_identity_verified , bedrooms , and bathrooms  are significant.
+
+#### How would you interpret the coefficient of "host_is_superhost"?
+
+All else being equal, being a superhost is associated with a 0.09784 decrease in log(price).
+
+#### Which of the three room types will be predicted to have the highest price, all else being equal?
+
+Entire home/apt 
+
+#### How would you interpret the coefficient of "neighborhoodBackBay"? 
+
+Compared to a listing that is in Allston but is otherwise identical, a Back Bay apartment will have a higher log(price) by 0.52385
+
+### CART and Random Forest 
+
+#### Create a simple CART model using bedrooms to predict log(price), with a cp value of 0.001.
+
+```{r}
+# Implement CART model
+library(rpart)
+library(rpart.plot)
+CARTmodel1 = rpart(logprice ~ bedrooms, data = train, cp =0.001)
+prp(CARTmodel1)
+
+# Make predictions
+predTest = predict(CARTmodel1, newdata = test)
+# SSE
+SSE = sum((predTest - test$logprice)^2)
+SSE
+# RMSE
+RMSE = sqrt(mean((predTest - test$logprice)^2))
+RMSE
+# Baseline
+baseline = mean(train$logprice)
+baseline
+# SSE of baseline model on testing set
+SSEb = sum((baseline - test$logprice)^2)
+SSEb
+# R^2
+Rsquared = 1 - SSE/SSEb
+Rsquared
+```
+
+##### What value of log(price) would this model predict for a two-bedroom listing?
+
+5.6 from the CART tree.
+
+##### What is the R^2^ of this model on the test set?
+
+R^2^ = 0.2234527
+
+#### Create a CART model that predicts log(price) using the following variables: log(accommodates), host_identity_verified, host_is_superhost, bedrooms, bathrooms, room_type, and neighborhood.
+
+Again, use cp = 0.001.
+
+```{r}
+# Implement CART model
+library(rpart)
+library(rpart.plot)
+CARTmodel2 = rpart(logprice ~ logacc + host_identity_verified + host_is_superhost + bedrooms + bathrooms + room_type + neighborhood, data = train, cp =0.001)
+prp(CARTmodel1)
+
+# Make predictions
+predTest = predict(CARTmodel2, newdata = test)
+# SSE
+SSE = sum((predTest - test$logprice)^2)
+SSE
+# RMSE
+RMSE = sqrt(mean((predTest - test$logprice)^2))
+RMSE
+# Baseline
+baseline = mean(train$logprice)
+baseline
+# SSE of baseline model on testing set
+SSEb = sum((baseline - test$logprice)^2)
+SSEb
+# R^2
+Rsquared = 1 - SSE/SSEb
+Rsquared
+```
+
+##### What is the R^2^ of this new model on the test set
+
+R^2^ = 0.6084916
+
+#### Create a random forest model that predicts log(price) using the same variables as the CART model, with nodesize = 20 and ntree = 200. Set the random seed to 1.
+
+```{r}
+# Implement CART model
+library(randomForest)
+set.seed(1)
+RFmodel1 = randomForest(logprice ~ logacc + host_identity_verified + host_is_superhost + bedrooms + bathrooms + room_type + neighborhood, data = train, nodesize = 20, ntree = 200)
+
+# Make predictions
+predTest = predict(RFmodel1, newdata = test)
+# SSE
+SSE = sum((predTest - test$logprice)^2)
+SSE
+# RMSE
+RMSE = sqrt(mean((predTest - test$logprice)^2))
+RMSE
+# Baseline
+baseline = mean(train$logprice)
+baseline
+# SSE of baseline model on testing set
+SSEb = sum((baseline - test$logprice)^2)
+SSEb
+# R^2
+Rsquared = 1 - SSE/SSEb
+Rsquared
+```
+
+##### What is the R2 of this new model on the test set? 
+
+R^2^ = 0.6452926

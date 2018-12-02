@@ -1,0 +1,246 @@
+---
+title: 'Analytics Edge: Final Exam - Understanding Movie Preferences'
+author: "Sulman Khan"
+date: "October 26, 2018"
+output: 
+  html_document:
+    css: C:/Users/Sulman/Desktop/Backup for New Laptop/Data Science/Analytics Edge/gf_small_touches.css
+    highlight: tango
+    mathjax: default
+    theme: cerulean
+---
+
+```{r setup, cache = FALSE, echo = FALSE, message = FALSE, warning = FALSE, tidy = FALSE}
+require(knitr)
+options(width = 200, scipen = 5)
+options(dplyr.print_max = 200)
+# options(width = 100, digits = 7)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE, 
+               collapse = TRUE, tidy = FALSE,
+               cache = TRUE, cache.path = '.cache/', 
+               fig.align = 'left', dpi = 100, fig.path = 'figures/Introductiontotextanalytics/')
+# opts_chunk$set(dev="png", 
+#                dev.args=list(type="cairo"),
+#                dpi=96)
+```
+## Understanding Movie Preferences
+
+### Background Information on the Dataset
+
+In Unit 6, we were introduced to a MovieLens dataset containing movies and their associated genres, and clustered movies accordingly.  In addition to collecting data on movies and genres, MovieLens collects data on users and their ratings of movies.  
+
+We collected the "latest" MovieLens dataset in September 2018 from https://grouplens.org/datasets/movielens/, and used it to create a new dataset that aggregates user ratings by the genres of the movies (omitting users who had rated less than 500 or over 2000 movies).
+
+Dataset: movielens-user-genre-ratings.csv
+
+Our dataset has the following columns:
+
+* **userId**: a unique integer identifying a user
+
+* **action**, **adventure**, ..., *western**: the sum of all the ratings that this user has rated any movies corresponding to these genres.  For example, the user with userID = 24 has action = 431, which means that the sum of the ratings of any action movies this user saw is 431.  For brevity, we will refer to this "sum of all the ratings" value as the score of the genre for the user.  Note that number of movies that a user has watched of the genre as well as the ratings that the user gave to each movie BOTH contribute to the score of a movie.
+
+In this problem, we aim to cluster users by the genres of movies they watch.
+
+
+### Exploratory Data Analysis
+
+Read the dataset movielens-user-genre-ratings.csv into a dataframe called ratings.
+
+```{r}
+# Read in the dataset
+ratings = read.csv("movielens-user-genre-ratings.csv")
+```
+
+#### How many users are in the dataset?
+```{r}
+# Find the number of observations
+str(ratings)
+```
+
+9144 users in the dataset.
+
+#### How many genres are in the dataset?
+
+```{r}
+# Number of variables - 1
+str(ratings)
+```
+
+19 genres.
+
+#### Which genre has the highest mean score across all users?
+```{r}
+# Summary of ratings
+z = summary(ratings)
+kable(z)
+```
+
+Drama has the highest mean score across all users.
+
+#### Which genre has the lowest total score across all users?
+
+film.noir has the lowest total score across all users.
+
+#### Which of the following pairs of genres are most positively correlated in their user scores?
+
+```{r}
+# Correlations amongst variables
+cor(ratings$action, ratings$adventure)
+cor(ratings$action, ratings$crime)
+cor(ratings$adventure, ratings$fantasy)
+cor(ratings$animation, ratings$children)
+```
+
+adventure, fantasy is the most positively correlated.
+
+### Clustering
+
+Remove the first column of the table using the following line of code.
+
+points = ratings[,2:ncol(ratings)]
+
+```{r}
+points = ratings[,2:ncol(ratings)]
+```
+
+#### Why did we remove the first column of our dataframe?
+
+The values in the first column are not meaningful for clustering correct 
+
+#### Why do we normalize data when clustering?
+
+To give all features equal weight 
+
+#### What will the maximum value of action be after normalization? Answer without actually normalizing the data.
+
+Not enough information 
+
+#### Normalize the data using the following code:
+
+What is the maximum value of adventure after the normalization?
+
+```{r}
+# Normalize the data
+library(caret)
+preproc = preProcess(points)
+pointsnorm = predict(preproc, points)
+
+# Maximum value of adventure
+max(pointsnorm$adventure)
+```
+
+7.013803 is the maximum value of adventure after the normalization.
+
+#### Create a dendogram using the following code:
+
+
+```{r}
+# Create dendrogram
+distances = dist(pointsnorm, method = "euclidean")
+
+dend = hclust(distances, method = "ward.D")
+
+plot(dend, labels = FALSE)
+```
+
+#### What number of clusters is associated with a height of approximately 1500? 
+
+3 clusters according to the dendrogram.
+
+#### In our clustering, we want to set the number of clusters to 5. Which of the following statements is most correct?
+
+The number of clusters with the most vertical room on the dendogram is less than 5, but we want more specific clusters. 
+
+#### Set the random seed to 200, and run the k-means clustering algorithm on your normalized dataset, setting the number of clusters to 5.
+
+```{r}
+# K-means clustering
+set.seed(200)
+kmc = kmeans(pointsnorm, centers = 5)
+# Divides the dataset into 5 different subsets for each cluster
+KmeansCluster1 = subset(pointsnorm, kmc$cluster == 1)
+
+KmeansCluster2 = subset(pointsnorm, kmc$cluster == 2)
+
+KmeansCluster3 = subset(pointsnorm, kmc$cluster == 3)
+
+KmeansCluster4 = subset(pointsnorm, kmc$cluster == 4)
+
+KmeansCluster5 = subset(pointsnorm, kmc$cluster == 5)
+```
+
+##### How many observations are in the smallest cluster?
+
+```{r}
+# Output the number of observations in each cluster
+nrow(KmeansCluster1)
+nrow(KmeansCluster2)
+nrow(KmeansCluster3)
+nrow(KmeansCluster4)
+nrow(KmeansCluster5)
+```
+
+748 observations are present in the smallest cluster, which is Cluster 4.
+
+### Conceptual Questions 
+
+#### If we ran k-means clustering a second time without making any additional calls to set.seed, we would expect:
+
+Different results from the first time correct 
+
+#### If we ran k-means clustering a second time after calling set.seed(200), we would expect:
+
+The same results from the first time correct 
+
+#### Why do we typically use cluster centroids to describe the clusters?
+
+The cluster centroid captures the average behavior in the cluster, and can be used to summarize the general pattern in the cluster. 
+
+#### Is "overfitting" a problem in clustering?
+
+Yes, at the extreme every data point can be assigned to its own cluster.
+
+#### Is "multicollinearity" a problem in clustering?
+
+Yes, multicollinearity could cause certain features to be overweighted in the distances calculations.
+
+### Understanding the Clusters 
+
+```{r}
+# Understanding the Clusters
+z = tail(sort(colMeans(KmeansCluster1)))
+kable(z)
+
+z = tail(sort(colMeans(KmeansCluster2)))
+kable(z)
+
+z = tail(sort(colMeans(KmeansCluster3)))
+kable(z)
+
+z = tail(sort(colMeans(KmeansCluster4)))
+kable(z)
+
+z = tail(sort(colMeans(KmeansCluster5)))
+kable(z)
+
+```
+
+#### Which of the clusters is best described as "users who like dramas, film noir, war movies, and crime movies?"
+
+Cluster 2.
+
+#### Which of the clusters is best described as "users who like adventure movies, fantasy movies, and action movies?"
+
+Cluster 4.
+
+#### What genre contributes least to the cluster described as "users who like adventure movies, fantasy movies, and action movies?"
+
+```{r}
+# Sort the genres in cluster 4
+z = sort(colMeans(KmeansCluster4))
+kable(z)
+```
+
+Film noir has the lowest contribution in Cluster 4.
+
+
